@@ -11,7 +11,7 @@
 <body class="bg-base-200 h-full flex items-center justify-center">
     <div class="card shadow-lg bg-base-100 flex flex-col lg:flex-row w-full max-w-5xl h-auto lg:h-[600px]">
 
-        <div class="flex-1 bg-gradient-to-br from-blue-500 via-blue-400 to-blue-300 text-white flex flex-col items-center justify-center p-8">
+        <div class="lg:w-1/2 bg-gradient-to-br from-blue-500 via-blue-400 to-blue-300 text-white flex flex-col items-center justify-center p-8">
             <div class="avatar mb-6">
                 <div class="w-40 rounded-full border-4 border-white">
                     <img src="{{ asset('images/sj-logo.jpg') }}" alt="Logo">
@@ -27,26 +27,53 @@
         </div>
 
 
-        <div class="flex-1 p-8 flex flex-col justify-center">
+        <div class="lg:w-1/2 p-8 flex flex-col justify-center">
             <h3 class="text-2xl font-bold text-center mb-6">Sign in to your account</h3>
 
-            <form action="" class="space-y-4">
-                <div>
-                    <label for="employee_id" class="block text-sm font-medium mb-1">Employee ID</label>
-                    <input type="text" placeholder="Employee ID" class="input input-bordered w-full" id="employee_id" required>
+            @if (session('error'))
+                <div class="alert alert-error mb-4">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-error mb-4">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('login') }}" method="POST" class="space-y-4">
+                @csrf
+                <x-input 
+                    label="User ID" 
+                    name="employee_id" 
+                    type="text" 
+                    placeholder="Enter your User ID" 
+                    required 
+                    value="{{ old('employee_id') }}"
+                />
+
+                <x-input 
+                    label="Password" 
+                    name="password" 
+                    type="password" 
+                    placeholder="Password" 
+                    required 
+                />
+
+                <div class="form-control">
+                    <label class="label cursor-pointer">
+                        <input type="checkbox" name="is_standard_employee" class="checkbox checkbox-primary" />
+                        <span class="label-text">Login as standard employee</span>
+                    </label>
                 </div>
 
-                <div>
-                    <label for="password" class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" placeholder="Password" class="input input-bordered w-full" id="password" required>
-                </div>
-
-                <button class="btn btn-primary w-full mt-4">Login</button>
+                <button type="submit" class="btn btn-primary w-full mt-4">Login</button>
             </form>
-
-            {{-- <p class="text-sm text-center mt-4">
-                Forgot your password? <a href="#" class="text-blue-500 hover:underline">Reset it here</a>.
-            </p> --}}
         </div>
     </div>
 </body>

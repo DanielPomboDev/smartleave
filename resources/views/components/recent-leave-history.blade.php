@@ -1,0 +1,80 @@
+<div class="card bg-white shadow-md">
+    <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="card-title text-xl font-bold text-gray-800">
+                <i class="fi-rr-time-past text-blue-500 mr-2"></i>
+                Recent Leave History
+            </h2>
+            
+            <a href="{{ route('employee.leave.history') }}" class="btn btn-sm btn-outline">
+                View All History
+                <i class="fi-rr-arrow-right ml-2"></i>
+            </a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="text-gray-600">Date Filed</th>
+                        <th class="text-gray-600">Leave Type</th>
+                        <th class="text-gray-600">Period</th>
+                        <th class="text-gray-600">No. of Days</th>
+                        <th class="text-gray-600">Status</th>
+                        <th class="text-gray-600">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($leaveRequests as $leaveRequest)
+                        <tr>
+                            <td>{{ $leaveRequest->created_at->format('M d, Y') }}</td>
+                            <td>{{ App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</td>
+                            <td>
+                                @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                    {{ $leaveRequest->start_date->format('M d, Y') }}
+                                @else
+                                    {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                @endif
+                            </td>
+                            <td>{{ $leaveRequest->number_of_days }}</td>
+                            <td>
+                                @if($leaveRequest->isPending())
+                                    <span class="badge badge-warning">Pending</span>
+                                @elseif($leaveRequest->isApproved())
+                                    <span class="badge badge-success">Approved</span>
+                                @elseif($leaveRequest->isDisapproved())
+                                    <span class="badge badge-error">Denied</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="flex space-x-2">
+                                    <a href="{{ route('leave.view', $leaveRequest->id) }}" class="btn btn-xs btn-ghost">
+                                        <i class="fi-rr-eye text-blue-500"></i>
+                                    </a>
+                                    
+                                    @if($leaveRequest->isPending())
+                                        <button class="btn btn-xs btn-ghost" onclick="alert('Edit functionality will be implemented soon')">
+                                            <i class="fi-rr-edit text-gray-500"></i>
+                                        </button>
+                                    @endif
+                                    
+                                    @if($leaveRequest->isApproved())
+                                        <button class="btn btn-xs btn-ghost" onclick="alert('Download functionality will be implemented soon')">
+                                            <i class="fi-rr-file-pdf text-red-500"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-gray-500">
+                                No leave requests found
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

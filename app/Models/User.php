@@ -13,20 +13,56 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'user_id';
+
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'user_id',
+        'first_name',
+        'middle_initial',
+        'last_name',
+        'office',
+        'position',
+        'salary',
+        'start_date',
         'password',
+        'user_type',
     ];
+    
+    /**
+     * Get the user's full name.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return trim(
+            $this->first_name . 
+            ($this->middle_initial ? ' ' . $this->middle_initial . '.' : '') . 
+            ' ' . $this->last_name
+        );
+    }
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<string>
      */
     protected $hidden = [
         'password',
@@ -34,15 +70,15 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'password' => 'hashed',
+        'start_date' => 'date',
+        'salary' => 'decimal:2',
+    ];
+    
+
 }
