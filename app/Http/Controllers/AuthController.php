@@ -72,7 +72,10 @@ class AuthController extends Controller
                 case 'hr':
                     return redirect()->route('hr.dashboard');
                 case 'department':
+                case 'admin':
                     return redirect()->route('department.dashboard');
+                case 'mayor':
+                    return redirect()->route('mayor.dashboard');
                 default:
                     return redirect()->route('employee.dashboard');
             }

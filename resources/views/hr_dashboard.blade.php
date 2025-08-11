@@ -2,120 +2,63 @@
     <x-slot:title>HR Manager Dashboard</x-slot:title>
     <x-slot:header>HR Dashboard</x-slot:header>
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <!-- Stats Cards - Left Side -->
-        <div class="lg:col-span-2">
-            <div class="card bg-white shadow-md h-full">
-                <div class="card-body flex flex-col">
-                    <h2 class="card-title text-xl font-bold text-gray-800 mb-4">
-                        <i class="fi-rr-stats text-blue-500 mr-2"></i>
-                        Leave Request Overview
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
-                        <!-- Pending Requests Card -->
-                        <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500 flex flex-col justify-between">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-blue-600">Pending Requests</p>
-                                    <h3 class="text-3xl font-bold text-gray-800 mt-1">12</h3>
-                                </div>
-                                <div class="bg-blue-100 p-3 rounded-full">
-                                    <i class="fi-rr-hourglass-end text-xl text-blue-500"></i>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">
-                                <span class="text-blue-600">↑ 8%</span> from last week
-                            </p>
-                        </div>
-                        
-                        <!-- Rejected This Month Card -->
-                        <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-500 flex flex-col justify-between">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-red-600">Rejected This Month</p>
-                                    <h3 class="text-3xl font-bold text-gray-800 mt-1">5</h3>
-                                </div>
-                                <div class="bg-red-100 p-3 rounded-full">
-                                    <i class="fi-rr-cross-circle text-xl text-red-500"></i>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">
-                                <span class="text-red-600">↓ 3%</span> from last month
-                            </p>
-                        </div>
-                        
-                        <!-- Approved This Month Card -->
-                        <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500 flex flex-col justify-between">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-green-600">Approved This Month</p>
-                                    <h3 class="text-3xl font-bold text-gray-800 mt-1">28</h3>
-                                </div>
-                                <div class="bg-green-100 p-3 rounded-full">
-                                    <i class="fi-rr-check-circle text-xl text-green-500"></i>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">
-                                <span class="text-green-600">↑ 12%</span> from last month
-                            </p>
-                        </div>
-                        
-                        <!-- Total Employees Card -->
-                        <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500 flex flex-col justify-between">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-purple-600">Total Employees</p>
-                                    <h3 class="text-3xl font-bold text-gray-800 mt-1">42</h3>
-                                </div>
-                                <div class="bg-purple-100 p-3 rounded-full">
-                                    <i class="fi-rr-users text-xl text-purple-500"></i>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">
-                                <span class="text-purple-600">↑ 2</span> new this month
-                            </p>
-                        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <!-- Pending Requests Card -->
+        <div class="card bg-white shadow-md">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-blue-600">Pending Requests</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">12</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <!-- Heroicon: Clock -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Import Leave Credits - Right Side -->
-        <div class="lg:col-span-1">
-            <div class="card bg-white shadow-md h-full">
-                <div class="card-body flex flex-col">
-                    <h2 class="card-title text-xl font-bold text-gray-800 mb-4">
-                        <i class="fi-rr-upload text-blue-500 mr-2"></i>
-                        Import Leave Credits
-                    </h2>
-                    
-                    <div class="flex flex-col flex-grow">
-                        <p class="text-sm text-gray-600 mb-4">
-                            Upload an Excel file to update employee leave credits in bulk.
-                        </p>
-                        
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 flex-grow flex flex-col items-center justify-center">
-                            <i class="fi-rr-file-excel text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-sm text-gray-500 mb-4">Drag and drop your Excel file here, or click to browse</p>
-                            <input type="file" class="hidden" id="fileUpload" accept=".xlsx, .xls, .csv">
-                            <button class="btn btn-outline btn-primary" onclick="document.getElementById('fileUpload').click()">
-                                <i class="fi-rr-upload mr-2"></i>
-                                Browse Files
-                            </button>
-                        </div>
-                        
-                        <div class="mt-auto">
-                            <a href="#" class="text-sm text-blue-500 hover:underline flex items-center">
-                                <i class="fi-rr-download mr-1"></i>
-                                Download template
-                            </a>
-                            
-                            <button class="btn btn-primary w-full mt-4">
-                                <i class="fi-rr-check mr-2"></i>
-                                Import Credits
-                            </button>
-                        </div>
+        <!-- Approved This Month Card -->
+        <div class="card bg-white shadow-md">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-green-600">Approved This Month</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">28</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <!-- Heroicon: Check Circle -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2l4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Rejected This Month Card -->
+        <div class="card bg-white shadow-md">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-red-600">Rejected This Month</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">5</h3>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <!-- Heroicon: X Circle -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Total Employees Card -->
+        <div class="card bg-white shadow-md">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-purple-600">Total Employees</p>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">42</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <!-- Heroicon: Users -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </div>
                 </div>
             </div>
@@ -170,15 +113,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-success" title="Approve">
-                                        <i class="fi-rr-check text-white"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-error" title="Reject">
-                                        <i class="fi-rr-cross text-white"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -202,9 +139,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -228,15 +165,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-success" title="Approve">
-                                        <i class="fi-rr-check text-white"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-error" title="Reject">
-                                        <i class="fi-rr-cross text-white"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -246,5 +177,3 @@
         </div>
     </div>
 </x-layouts.layout>
-
-

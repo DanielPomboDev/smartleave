@@ -48,21 +48,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <a href="{{ route('leave.view', $leaveRequest->id) }}" class="btn btn-xs btn-ghost">
-                                        <i class="fi-rr-eye text-blue-500"></i>
+                                    <a href="{{ route('leave.view', $leaveRequest->id) }}" class="btn btn-xs bg-blue-600 text-white hover:bg-blue-700 border-none">
+                                        View
                                     </a>
-                                    
-                                    @if($leaveRequest->isPending())
-                                        <button class="btn btn-xs btn-ghost" onclick="alert('Edit functionality will be implemented soon')">
-                                            <i class="fi-rr-edit text-gray-500"></i>
-                                        </button>
-                                    @endif
-                                    
-                                    @if($leaveRequest->isApproved())
-                                        <button class="btn btn-xs btn-ghost" onclick="alert('Download functionality will be implemented soon')">
-                                            <i class="fi-rr-file-pdf text-red-500"></i>
-                                        </button>
-                                    @endif
                                 </div>
                             </td>
                         </tr>

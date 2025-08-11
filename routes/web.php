@@ -3,7 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\HRController;
 use Illuminate\Support\Facades\Auth;
+use App\Models\LeaveRequest;
 
 // Set root to redirect to login page
 Route::get('/', function () {
@@ -26,20 +29,23 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/hr-dashboard', function () {
         // TODO: Create this view or point to a controller method
-        return view('hr_dashboard'); 
+        return view('hr_dashboard');
     })->name('hr.dashboard');
 
     Route::get('/leave-requests', function () {
         return view('hr_leave_requests');
     })->name('leave.requests');
 
-    Route::get('/leave-credits', function () {
-        return view('hr_leave_credits');
-    })->name('leave.credits');
+    Route::get('/leave-approve/{id}', [LeaveController::class, 'showHRApproval'])->name('leave.approve.start');
+    Route::post('/leave-approve/{id}/process', [LeaveController::class, 'processHRApproval'])->name('leave.approve.process');
 
-    Route::get('/hr-employees', function () {
-        return view('hr_employees');
-    })->name('hr.employees');
+    Route::get('/leave-credits', [HRController::class, 'leaveRecords'])->name('leave.credits');
+    Route::get('/leave-records', function () {
+        return view('hr_leave_record');
+    })->name('leave.record.show');
+
+    Route::get('/hr-employees', [HRController::class, 'employees'])->name('hr.employees');
+    Route::post('/hr-employees', [HRController::class, 'store'])->name('hr.employees.store');
 
     Route::get('/hr-profile', function () {
         return view('hr_profile');
@@ -52,9 +58,13 @@ Route::middleware(['auth'])->group(function () {
 
 // Department Admin routes - require authentication
 Route::middleware(['auth'])->group(function () {
-    Route::get('/department-leave-requests', function () {
-        return view('department_leave_requests');
-    })->name('department.leave.requests');
+    Route::get('/department-dashboard', [LeaveController::class, 'departmentDashboard'])->name('department.dashboard');
+
+    Route::get('/department-leave-requests', [LeaveController::class, 'departmentLeaveRequests'])->name('department.leave.requests');
+
+    Route::get('/department-leave-approve/{id}', [LeaveController::class, 'showDepartmentApproval'])->name('department.leave.approve.start');
+
+    Route::post('/department-leave-approve/{id}/process', [LeaveController::class, 'processDepartmentApproval'])->name('department.leave.approve.process');
 
     Route::get('/department-profile', function () {
         return view('department_profile');
@@ -82,11 +92,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/leave-history', [LeaveController::class, 'history'])->name('employee.leave.history');
 
-    Route::put('/settings', function (Illuminate\Http\Request $request) {
-        // TODO: Implement settings update logic here
-        // For now, just redirect back with a success message
-        return back()->with('success', 'Settings updated successfully!'); 
-    })->name('settings.update');
+    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
 
     Route::put('/settings/notifications', function (Illuminate\Http\Request $request) {
         // TODO: Implement notification settings update logic here
@@ -95,8 +101,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Leave request routes
-Route::get('/view-leave-request/{id}', function () {
-    return view('view_leave_request');
+Route::get('/view-leave-request/{id}', function ($id) {
+    $leaveRequest = LeaveRequest::findOrFail($id);
+    return view('view_leave_request', compact('leaveRequest'));
 })->name('leave.view');
 
 // Leave management routes
@@ -104,3 +111,101 @@ Route::post('/leave', [LeaveController::class, 'store'])->name('leave.store');
 Route::put('/leave/{id}', [LeaveController::class, 'update'])->name('leave.update');
 Route::delete('/leave/{id}', [LeaveController::class, 'destroy'])->name('leave.destroy');
 Route::post('/leave/{id}/process', [LeaveController::class, 'processApproval'])->name('leave.process');
+
+// HR Manager routes - require authentication
+Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
+    Route::get('/dashboard', function () {
+        if (Auth::user()->user_type !== 'hr') {
+            return redirect('/employee-dashboard');
+        }
+        return view('hr_dashboard');
+    })->name('dashboard');
+
+    Route::get('/employees', [HRController::class, 'employees'])->name('employees');
+    Route::post('/employees', [HRController::class, 'store'])->name('employees.store');
+    Route::get('/employees/{id}/edit', [HRController::class, 'edit'])->name('employees.edit');
+    Route::put('/employees/{id}', [HRController::class, 'update'])->name('employees.update');
+
+    Route::get('/profile', function () {
+        if (Auth::user()->user_type !== 'hr') {
+            return redirect('/employee-dashboard');
+        }
+        return view('hr_profile');
+    })->name('profile');
+
+    Route::get('/settings', function () {
+        if (Auth::user()->user_type !== 'hr') {
+            return redirect('/employee-dashboard');
+        }
+        return view('hr_settings');
+    })->name('settings');
+
+    Route::get('/leave-requests', function () {
+        if (Auth::user()->user_type !== 'hr') {
+            return redirect('/employee-dashboard');
+        }
+        return view('hr_leave_requests');
+    })->name('leave.requests');
+
+    Route::get('/leave-credits', function () {
+        if (Auth::user()->user_type !== 'hr') {
+            return redirect('/employee-dashboard');
+        }
+        return view('hr_leave_credits');
+    })->name('leave.credits');
+
+    Route::get('/leave-records', function () {
+        return view('hr_leave_record');
+    })->name('leave.record.show');
+});
+
+// Mayor routes - require authentication
+Route::middleware(['auth'])->group(function () {
+    Route::get('/mayor-dashboard', [LeaveController::class, 'mayorDashboard'])->name('mayor.dashboard');
+    Route::get('/mayor-leave-requests', [LeaveController::class, 'mayorLeaveRequests'])->name('mayor.leave.requests');
+    Route::get('/mayor-leave-approve/{id}', function ($id) {
+        // Sample data for the final approval page
+        $leaveRequest = (object) [
+            'user' => (object) [
+                'first_name' => 'Juan',
+                'last_name' => 'Dela Cruz',
+                'position' => 'IT Specialist',
+                'department' => (object) ['name' => 'IT Department']
+            ],
+            'leave_type' => 'vacation',
+            'created_at' => now(),
+            'start_date' => now(),
+            'end_date' => now()->addDays(2),
+            'number_of_days' => 3,
+            'where_spent' => 'Within the Philippines',
+            'commutation' => true,
+            'reason' => 'Family vacation',
+            'attachments' => ['itinerary.pdf'],
+            'id' => $id
+        ];
+        $departmentRecommendation = (object) [
+            'name' => 'John Smith',
+            'position' => 'Department Head',
+            'decision' => 'approve',
+            'reason' => 'Leave request is valid and within policy guidelines.'
+        ];
+        $hrApproval = (object) [
+            'name' => 'Maria Santos',
+            'position' => 'HR Manager',
+            'decision' => 'approve',
+            'comments' => 'Approved for 3 days with pay.'
+        ];
+        $leaveTypes = [
+            'vacation' => 'Vacation Leave',
+            'sick' => 'Sick Leave',
+            'emergency' => 'Emergency Leave'
+        ];
+        return view('mayor_leave_approve', compact('leaveRequest', 'departmentRecommendation', 'hrApproval', 'leaveTypes'));
+    })->name('mayor.leave.approve.start');
+    Route::get('/mayor-profile', function () {
+        return view('mayor_profile');
+    })->name('mayor.profile');
+    Route::get('/mayor-settings', function () {
+        return view('mayor_settings');
+    })->name('mayor.settings');
+});

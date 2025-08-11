@@ -1,5 +1,5 @@
 <x-layouts.layout>
-    <x-slot:title>Department Admin Profile</x-slot:title>
+    <x-slot:title>Mayor Profile</x-slot:title>
     <x-slot:header>My Profile</x-slot:header>
     
     @guest
@@ -63,12 +63,12 @@
                             
                             <div>
                                 <h3 class="text-sm font-medium text-gray-500">Position</h3>
-                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->position ?? 'Not available' }}</p>
+                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->position ?? 'Mayor' }}</p>
                             </div>
                             
                             <div>
                                 <h3 class="text-sm font-medium text-gray-500">Office/Agency</h3>
-                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->department->name ?? 'Not assigned' }}</p>
+                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->department->name ?? 'Mayor Office' }}</p>
                             </div>
                         </div>
                         
@@ -109,4 +109,4 @@
             }
         });
     </script>
-</x-layouts.layout>
+</x-layouts.layout> 

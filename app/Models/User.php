@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Models\Department;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
@@ -37,6 +38,7 @@ class User extends Authenticatable
         'first_name',
         'middle_initial',
         'last_name',
+        'department_id',
         'office',
         'position',
         'salary',
@@ -44,6 +46,14 @@ class User extends Authenticatable
         'password',
         'user_type',
     ];
+
+    /**
+     * Get the department that owns the user.
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
     
     /**
      * Get the user's full name.

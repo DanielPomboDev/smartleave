@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeaveRequest;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use App\Notifications\LeaveRequestStatusUpdated;
+use Illuminate\Support\Facades\DB;
 
 class LeaveController extends Controller
 {
@@ -24,22 +28,22 @@ class LeaveController extends Controller
             'decision' => 'required|in:approve,reject',
             'comments' => 'nullable|string|max:500',
         ]);
-        
+
         // Find the leave request
         $leaveRequest = LeaveRequest::findOrFail($id);
-        
+
         // Update the leave request status
-        $leaveRequest->status = $validated['decision'] === 'approve' 
-            ? LeaveRequest::STATUS_APPROVED 
+        $leaveRequest->status = $validated['decision'] === 'approve'
+            ? LeaveRequest::STATUS_APPROVED
             : LeaveRequest::STATUS_DISAPPROVED;
-            
+
         // Save comments if provided
         if (!empty($validated['comments'])) {
             $leaveRequest->comments = $validated['comments'];
         }
-        
+
         $leaveRequest->save();
-        
+
         // Redirect with success message
         $action = $validated['decision'] === 'approve' ? 'approved' : 'rejected';
         return redirect()->route('hr.leave.requests')
@@ -71,7 +75,7 @@ class LeaveController extends Controller
                 'vacationSubtype' => 'required|string',
                 'vacationOtherSpecify' => 'required_if:vacationSubtype,other|nullable|string|max:255',
             ]);
-            
+
             // Get the full text for vacation subtype
             if ($request->input('vacationSubtype') === 'employment') {
                 $subtype = 'To seek employment';
@@ -85,7 +89,7 @@ class LeaveController extends Controller
                 'sickSubtype' => 'required|string',
                 'sickOtherSpecify' => 'required_if:sickSubtype,other|nullable|string|max:255',
             ]);
-            
+
             // Get the full text for sick subtype
             if ($request->input('sickSubtype') === 'other') {
                 $subtype = $request->input('sickOtherSpecify');
@@ -130,7 +134,7 @@ class LeaveController extends Controller
                 'hospital' => 'In Hospital',
                 'outpatient' => 'Outpatient' // Only used if no specification provided
             ];
-            
+
             $whereSpent = $locationTypeMap[$validated['locationType']] ?? $validated['locationType'];
         }
         $leaveRequest->where_spent = $whereSpent;
@@ -138,11 +142,11 @@ class LeaveController extends Controller
         $leaveRequest->commutation = isset($validated['commutation']) && $validated['commutation'] == '1';
         $leaveRequest->status = LeaveRequest::STATUS_PENDING;
         $leaveRequest->save();
-        
+
         // Redirect with success message - stay on the same page
         return redirect()->back()->with('success', 'Your leave request has been submitted successfully and is pending approval.');
     }
-    
+
     /**
      * Display the leave request history for the authenticated user with filtering.
      *
@@ -188,6 +192,398 @@ class LeaveController extends Controller
                 'month' => $month,
                 'leave_type' => $leaveType,
                 'status' => $status
+            ]
+        ]);
+    }
+
+    /**
+     * Display a list of users.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function showUsers()
+    {
+        // Retrieve all users
+        $users = \App\Models\User::all();
+
+        // Pass users data to the view
+        return view('hr_employees', ['users' => $users]);
+    }
+
+    /**
+     * Get recent leave requests for the department dashboard.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function departmentDashboard()
+    {
+        // Get the authenticated user's department
+        $departmentId = Auth::user()->department_id;
+
+        // Get recent leave requests from users in the same department
+        $leaveRequests = LeaveRequest::with('user')
+            ->whereHas('user', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // Get department statistics
+        $stats = [
+            'pending' => LeaveRequest::whereHas('user', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })->where('status', LeaveRequest::STATUS_PENDING)->count(),
+            'approved_this_month' => LeaveRequest::whereHas('user', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })->where('status', LeaveRequest::STATUS_APPROVED)
+                ->whereMonth('created_at', now()->month)
+                ->count(),
+            'rejected_this_month' => LeaveRequest::whereHas('user', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })->where('status', LeaveRequest::STATUS_DISAPPROVED)
+                ->whereMonth('created_at', now()->month)
+                ->count(),
+            'department_employees' => User::where('department_id', $departmentId)->count()
+        ];
+
+        return view('department_dashboard', [
+            'leaveRequests' => $leaveRequests,
+            'stats' => $stats
+        ]);
+    }
+
+    /**
+     * Show the department leave approval form.
+     *
+     * @param  int  $id
+     * @return \Illuminate\View\View
+     */
+    public function showDepartmentApproval($id)
+    {
+        // Get the leave request with user and department information
+        $leaveRequest = LeaveRequest::with(['user', 'user.department'])
+            ->findOrFail($id);
+
+        // Check if the leave request belongs to a user in the same department
+        if ($leaveRequest->user->department_id !== Auth::user()->department_id) {
+            abort(403, 'You are not authorized to view this leave request.');
+        }
+
+        return view('department_leave_approve', [
+            'leaveId' => $id,
+            'leaveRequest' => $leaveRequest
+        ]);
+    }
+
+    /**
+     * Process the department leave approval.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function processDepartmentApproval(Request $request, $id)
+    {
+        try {
+            $leaveRequest = LeaveRequest::with('user')->findOrFail($id);
+
+            // Check if the leave request belongs to a user in the same department
+            if ($leaveRequest->user->department_id !== Auth::user()->department_id) {
+                return redirect()->back()->with('error', 'You are not authorized to approve this leave request.');
+            }
+
+            // Check if the leave request is still pending
+            if ($leaveRequest->status !== LeaveRequest::STATUS_PENDING) {
+                return redirect()->back()->with('error', 'This leave request has already been processed.');
+            }
+
+            // Validate the request
+            $validated = $request->validate([
+                'recommendation' => 'required|in:approve,disapprove',
+                'approval_reason' => 'nullable|string|max:500',
+                'disapproval_reason' => 'required_if:recommendation,disapprove|nullable|string|max:500',
+            ], [
+                'disapproval_reason.required_if' => 'Please provide a reason for disapproval.',
+                'disapproval_reason.string' => 'The disapproval reason must be text.',
+                'approval_reason.string' => 'The approval reason must be text.',
+            ]);
+
+            // Create leave recommendation
+            $recommendation = new \App\Models\LeaveRecommendation();
+            $recommendation->leave_request_id = $id;
+            $recommendation->decision = $validated['recommendation'];
+            $recommendation->reason = $validated['recommendation'] === 'approve'
+                ? ($validated['approval_reason'] ?? '')
+                : ($validated['disapproval_reason'] ?? '');
+            $recommendation->department_admin_id = Auth::id();
+            $recommendation->save();
+
+            // Update the leave request status only if disapproved
+            if ($validated['recommendation'] === 'disapprove') {
+                DB::statement("UPDATE leave_requests SET status = ? WHERE id = ?", ['disapproved', $id]);
+            }
+
+            // Send notification to HR
+            $hrUsers = User::where('user_type', 'hr')->get();
+
+            foreach ($hrUsers as $hrUser) {
+                $hrUser->notify(new LeaveRequestStatusUpdated($leaveRequest));
+            }
+
+            return redirect()->route('department.dashboard')
+                ->with('success', 'Leave request has been ' . ($validated['recommendation'] === 'approve' ? 'approved' : 'disapproved') . ' by department.');
+        } catch (\Exception $e) {
+            Log::error('Department approval error', [
+                'leave_request_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => Auth::id(),
+                'user_type' => Auth::user()->user_type ?? 'not logged in'
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'An error occurred while processing the leave request: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the HR leave approval form.
+     *
+     * @param  int  $id
+     * @return \Illuminate\View\View
+     */
+    public function showHRApproval($id)
+    {
+        // Get the leave request with user and department information
+        $leaveRequest = LeaveRequest::with(['user', 'user.department'])
+            ->findOrFail($id);
+
+        return view('hr_leave_approve', [
+            'leaveId' => $id,
+            'leaveRequest' => $leaveRequest
+        ]);
+    }
+
+    /**
+     * Process the HR leave approval.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function processHRApproval(Request $request, $id)
+    {
+        try {
+            $leaveRequest = LeaveRequest::with('user')->findOrFail($id);
+
+            // Check if the leave request is still pending or department approved
+            if (!in_array($leaveRequest->status, [LeaveRequest::STATUS_PENDING, LeaveRequest::STATUS_DEPARTMENT_APPROVED])) {
+                return redirect()->back()->with('error', 'This leave request has already been processed.');
+            }
+
+            // Validate the request
+            $validated = $request->validate([
+                'decision' => 'required|in:approve,disapprove',
+                'comments' => 'nullable|string|max:500',
+            ]);
+
+            // Update the leave request status
+            $leaveRequest->status = $validated['decision'] === 'approve'
+                ? LeaveRequest::STATUS_APPROVED
+                : LeaveRequest::STATUS_DISAPPROVED;
+
+            // Save comments if provided
+            if (!empty($validated['comments'])) {
+                $leaveRequest->hr_comments = $validated['comments'];
+            }
+
+            $leaveRequest->hr_approved_by = Auth::id();
+            $leaveRequest->hr_approved_at = now();
+            $leaveRequest->save();
+
+            // Send notification to the employee
+            $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+
+            return redirect()->route('leave.requests')
+                ->with('success', 'Leave request has been ' . ($validated['decision'] === 'approve' ? 'approved' : 'disapproved') . ' by HR.');
+        } catch (\Exception $e) {
+            Log::error('HR approval error', [
+                'leave_request_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => Auth::id(),
+                'user_type' => Auth::user()->user_type ?? 'not logged in'
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'An error occurred while processing the leave request: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display department leave requests with filtering.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function departmentLeaveRequests(Request $request)
+    {
+        // Get filter parameters
+        $status = $request->input('status', 'all');
+        $leaveType = $request->input('leave_type', 'all');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $search = $request->input('search', '');
+
+        // Get the authenticated user's department
+        $departmentId = Auth::user()->department_id;
+
+        // Start building the query
+        $query = LeaveRequest::with(['user', 'user.department'])
+            ->whereHas('user', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })
+            ->orderBy('created_at', 'desc');
+
+        // Apply filters
+        if ($status !== 'all') {
+            $statusMap = [
+                'pending' => LeaveRequest::STATUS_PENDING,
+                'approved' => LeaveRequest::STATUS_APPROVED,
+                'rejected' => LeaveRequest::STATUS_DISAPPROVED
+            ];
+            $query->where('status', $statusMap[$status]);
+        }
+
+        if ($leaveType !== 'all') {
+            $query->where('leave_type', $leaveType);
+        }
+
+        if ($startDate) {
+            $query->where('start_date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->where('end_date', '<=', $endDate);
+        }
+
+        // Apply search
+        if (!empty($search)) {
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Get paginated results
+        $leaveRequests = $query->paginate(10)->withQueryString();
+
+        return view('department_leave_requests', [
+            'leaveRequests' => $leaveRequests,
+            'filters' => [
+                'status' => $status,
+                'leave_type' => $leaveType,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'search' => $search
+            ]
+        ]);
+    }
+
+    /**
+     * Get recent leave requests for the mayor dashboard.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function mayorDashboard()
+    {
+        // Get recent leave requests from all users
+        $leaveRequests = LeaveRequest::with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // Get overall statistics
+        $stats = [
+            'pending' => LeaveRequest::where('status', LeaveRequest::STATUS_PENDING)->count(),
+            'approved_this_month' => LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)
+                ->whereMonth('created_at', now()->month)
+                ->count(),
+            'rejected_this_month' => LeaveRequest::where('status', LeaveRequest::STATUS_DISAPPROVED)
+                ->whereMonth('created_at', now()->month)
+                ->count(),
+            'total_employees' => User::count()
+        ];
+
+        return view('mayor_dashboard', [
+            'leaveRequests' => $leaveRequests,
+            'stats' => $stats
+        ]);
+    }
+
+    /**
+     * Display mayor leave requests with filtering.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function mayorLeaveRequests(Request $request)
+    {
+        // Get filter parameters
+        $status = $request->input('status', 'all');
+        $leaveType = $request->input('leave_type', 'all');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $search = $request->input('search', '');
+
+        // Start building the query (for all users)
+        $query = LeaveRequest::with(['user', 'user.department'])
+            ->orderBy('created_at', 'desc');
+
+        // Apply filters
+        if ($status !== 'all') {
+            $statusMap = [
+                'pending' => LeaveRequest::STATUS_PENDING,
+                'approved' => LeaveRequest::STATUS_APPROVED,
+                'rejected' => LeaveRequest::STATUS_DISAPPROVED
+            ];
+            $query->where('status', $statusMap[$status]);
+        }
+
+        if ($leaveType !== 'all') {
+            $query->where('leave_type', $leaveType);
+        }
+
+        if ($startDate) {
+            $query->where('start_date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->where('end_date', '<=', $endDate);
+        }
+
+        // Apply search
+        if (!empty($search)) {
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Get paginated results
+        $leaveRequests = $query->paginate(10)->withQueryString();
+
+        return view('mayor_leave_requests', [
+            'leaveRequests' => $leaveRequests,
+            'filters' => [
+                'status' => $status,
+                'leave_type' => $leaveType,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'search' => $search
             ]
         ]);
     }

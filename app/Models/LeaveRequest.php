@@ -11,6 +11,7 @@ class LeaveRequest extends Model
     public const TYPE_SICK = 'sick';
 
     public const STATUS_PENDING = 'pending';
+    public const STATUS_DEPARTMENT_APPROVED = 'department_approved';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_DISAPPROVED = 'disapproved';
 
@@ -29,6 +30,12 @@ class LeaveRequest extends Model
         'where_spent',
         'commutation',
         'status',
+        'department_comments',
+        'department_approved_by',
+        'department_approved_at',
+        'hr_comments',
+        'hr_approved_by',
+        'hr_approved_at',
     ];
 
     /**
@@ -37,8 +44,10 @@ class LeaveRequest extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'department_approved_at' => 'datetime',
+        'hr_approved_at' => 'datetime',
         'commutation' => 'boolean',
         'number_of_days' => 'integer',
     ];
@@ -60,6 +69,7 @@ class LeaveRequest extends Model
      */
     public const STATUSES = [
         self::STATUS_PENDING => 'Pending',
+        self::STATUS_DEPARTMENT_APPROVED => 'Department Approved',
         self::STATUS_APPROVED => 'Approved',
         self::STATUS_DISAPPROVED => 'Disapproved',
     ];
@@ -69,7 +79,7 @@ class LeaveRequest extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     /**

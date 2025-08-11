@@ -5,26 +5,19 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Database\Seeders\DepartmentSeeder;
+use Database\Seeders\UserSeeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
      */
-    public function run(): void
+    public function run()
     {
-        // Create HR user
-        User::create([
-            'user_id' => 'HR001',
-            'first_name' => 'HR',
-            'middle_initial' => 'A',
-            'last_name' => 'Admin',
-            'office' => 'main',
-            'position' => 'HR Manager',
-            'salary' => 50000.00,
-            'start_date' => now()->subYears(2),
-            'password' => 'password',
-            'user_type' => 'hr',
+        $this->call([
+            DepartmentSeeder::class,
+            UserSeeder::class,
         ]);
 
         // Create Department Admin user
@@ -33,11 +26,11 @@ class DatabaseSeeder extends Seeder
             'first_name' => 'Department',
             'middle_initial' => 'B',
             'last_name' => 'Admin',
-            'office' => 'branch1',
+            'department_id' => 1, // Assuming department ID 1 is 'Accounting Office'
             'position' => 'Department Head',
             'salary' => 45000.00,
             'start_date' => now()->subYear(),
-            'password' => 'password',
+            'password' => Hash::make('password'),
             'user_type' => 'department',
         ]);
 
@@ -47,11 +40,11 @@ class DatabaseSeeder extends Seeder
             'first_name' => 'Myrna',
             'middle_initial' => 'O',
             'last_name' => 'Quintua',
-            'office' => 'Accounting Office',
+            'department_id' => 1, // Assuming department ID 1 is 'Accounting Office'
             'position' => 'Employee',
             'salary' => 35000.00,
             'start_date' => '2002-01-25',
-            'password' => 'password',
+            'password' => Hash::make('password'),
             'user_type' => 'employee',
         ]);
     }

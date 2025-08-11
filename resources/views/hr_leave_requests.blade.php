@@ -89,7 +89,8 @@
                             <h3 class="text-2xl font-bold text-gray-800 mt-1">12</h3>
                         </div>
                         <div class="bg-blue-100 p-3 rounded-full">
-                            <i class="fi-rr-hourglass-end text-xl text-blue-500"></i>
+                            <!-- Heroicon: Clock -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                     </div>
                 </div>
@@ -101,7 +102,8 @@
                             <h3 class="text-2xl font-bold text-gray-800 mt-1">28</h3>
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
-                            <i class="fi-rr-check-circle text-xl text-green-500"></i>
+                            <!-- Heroicon: Check Circle -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2l4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                     </div>
                 </div>
@@ -113,7 +115,8 @@
                             <h3 class="text-2xl font-bold text-gray-800 mt-1">5</h3>
                         </div>
                         <div class="bg-red-100 p-3 rounded-full">
-                            <i class="fi-rr-cross-circle text-xl text-red-500"></i>
+                            <!-- Heroicon: X Circle -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
                         </div>
                     </div>
                 </div>
@@ -155,15 +158,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Daniel Pombo', 'Vacation Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-success" title="Approve" onclick="window.location.href='{{ route('leave.approve.start', ['id' => 1]) }}'">
-                                        <i class="fi-rr-check text-white"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-error" title="Reject">
-                                        <i class="fi-rr-cross text-white"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -188,9 +185,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Jane Smith', 'Sick Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 2]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -215,15 +212,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Robert Johnson', 'Emergency Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-success" title="Approve" onclick="window.location.href='{{ route('leave.approve.start', ['id' => 1]) }}'">
-                                        <i class="fi-rr-check text-white"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-error" title="Reject">
-                                        <i class="fi-rr-cross text-white"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 3]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -248,9 +239,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Maria Williams', 'Maternity Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 4]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -275,9 +266,9 @@
                             </td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Thomas Brown', 'Sick Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
+                                    <a href="{{ route('leave.approve.start', ['id' => 5]) }}" class="btn btn-xs btn-primary">
+                                        View
+                                    </a>
                                 </div>
                             </td>
                         </tr>

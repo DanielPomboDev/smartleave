@@ -20,7 +20,7 @@
                     <div class="avatar mb-6">
                         <div class="w-40 h-40 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 bg-blue-500 flex items-center justify-center overflow-hidden" id="profileImageContainer">
                             <img src="{{ asset('images/profile-placeholder.jpg') }}" alt="Profile Picture" class="w-full h-full object-cover hidden" id="profilePreview">
-                            <span class="text-4xl font-bold text-white flex items-center justify-center w-full h-full" id="initialsDisplay">{{ strtoupper(substr(Auth::user()->name ?? 'User', 0, 2)) }}</span>
+                            <span class="text-4xl font-bold text-white flex items-center justify-center w-full h-full" id="initialsDisplay">{{ strtoupper(substr(Auth::user()->first_name ?? 'U', 0, 1) . substr(Auth::user()->last_name ?? 'S', 0, 1)) }}</span>
                         </div>
                     </div>
                     
@@ -53,7 +53,7 @@
                         <div class="space-y-6">
                             <div>
                                 <h3 class="text-sm font-medium text-gray-500">Full Name</h3>
-                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->name ?? 'Not available' }}</p>
+                                <p class="text-lg font-semibold text-gray-800">{{ (Auth::user()->first_name ?? '') . ' ' . (Auth::user()->middle_initial ?? '') . (Auth::user()->middle_initial ? '. ' : '') . (Auth::user()->last_name ?? 'Not available') }}</p>
                             </div>
                             
                             <div>
@@ -67,7 +67,7 @@
                             </div>
                             
                             <div>
-                                <h3 class="text-sm font-medium text-gray-500">Department</h3>
+                                <h3 class="text-sm font-medium text-gray-500">Office/Agency</h3>
                                 <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->department->name ?? 'Not assigned' }}</p>
                             </div>
                         </div>
@@ -76,17 +76,12 @@
                         <div class="space-y-6">
                             <div>
                                 <h3 class="text-sm font-medium text-gray-500">Date Hired</h3>
-                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->created_at->format('F d, Y') }}</p>
+                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->start_date ? date('F d, Y', strtotime(Auth::user()->start_date)) : 'Not available' }}</p>
                             </div>
                             
                             <div>
-                                <h3 class="text-sm font-medium text-gray-500">Email Address</h3>
-                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->email ?? 'Not available' }}</p>
-                            </div>
-                            
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-500">Contact Number</h3>
-                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->phone_number ?? 'Not available' }}</p>
+                                <h3 class="text-sm font-medium text-gray-500">Salary</h3>
+                                <p class="text-lg font-semibold text-gray-800">₱{{ number_format(Auth::user()->salary ?? 0, 2) }}</p>
                             </div>
                         </div>
                     </div>
@@ -94,43 +89,7 @@
             </div>
         </div>
         
-        <!-- Settings Card -->
-        <div class="card bg-white shadow-md mt-6">
-            <div class="card-body">
-                <h2 class="card-title text-xl font-bold text-gray-800 mb-6">
-                    <i class="fi-rr-settings text-blue-500 mr-2"></i>
-                    Account Settings
-                </h2>
-                
-                <form class="space-y-4">
-                    <div class="form-control">
-                        <label class="label">
-                        <span class="label-text">Current Password</span>
-                    </label>
-                    <input type="password" class="input input-bordered w-full" placeholder="Enter current password" />
-                </div>
-                
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">New Password</span>
-                    </label>
-                    <input type="password" class="input input-bordered w-full" placeholder="Enter new password" />
-                </div>
-                
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Confirm New Password</span>
-                    </label>
-                    <input type="password" class="input input-bordered w-full" placeholder="Confirm new password" />
-                </div>
-                
-                <button type="submit" class="btn btn-primary w-full">
-                    <i class="fi-rr-save mr-2"></i>
-                    Save Changes
-                </button>
-            </form>
-        </div>
-    </div>
+
     
     <script>
         // Profile picture upload functionality

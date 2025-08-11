@@ -1,22 +1,17 @@
 <x-layouts.layout>
-    <x-slot:title>Leave Credits</x-slot:title>
-    <x-slot:header>Leave Credits</x-slot:header>
+    <x-slot:title>Leave Records</x-slot:title>
+    <x-slot:header>Leave Records</x-slot:header>
     
     <div class="card bg-white shadow-md mb-6">
         <div class="card-body">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="card-title text-xl font-bold text-gray-800">
-                    <i class="fi-rr-coins text-blue-500 mr-2"></i>
-                    Manage Leave Credits
+                    <i class="fi-rr-time-past text-blue-500 mr-2"></i>
+                    Leave Records
                 </h2>
-                
-                <button class="btn btn-primary" onclick="openImportModal()">
-                    <i class="fi-rr-upload mr-2"></i>
-                    Import Leave Credits
-                </button>
             </div>
             
-            <!-- Filter Controls - Single Row -->
+            <!-- Filter Controls -->
             <div class="mb-6">
                 <div class="flex flex-wrap items-end gap-4">
                     <!-- Department Filter -->
@@ -26,10 +21,11 @@
                         </label>
                         <select id="department-filter" class="select select-bordered w-full border-gray-300 focus:border-blue-500">
                             <option value="all">All Departments</option>
-                            <option value="it">IT Department</option>
-                            <option value="hr">HR Department</option>
-                            <option value="finance">Finance Department</option>
-                            <option value="operations">Operations</option>
+                            @foreach($departments as $dept)
+                                <option value="{{ $dept->id }}" {{ $filters['department'] == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     
@@ -46,14 +42,28 @@
                         </select>
                     </div>
                     
+                    <!-- Date Range Filter -->
+                    <div class="form-control w-52">
+                        <label class="label py-1">
+                            <span class="label-text font-medium text-gray-700">Date Range</span>
+                        </label>
+                        <select id="date-range-filter" class="select select-bordered w-full border-gray-300 focus:border-blue-500">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
                     <!-- Search Employee -->
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text font-medium text-gray-700">Search</span>
                         </label>
                         <div class="relative">
-                            <input type="text" placeholder="Search employee name" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10">
-                            <button class="absolute right-2 top-1/2 -translate-y-1/2">
+                            <input type="text" id="search-input" value="{{ $filters['search'] }}" placeholder="Search employee name" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10">
+                            <button type="button" id="search-button" class="absolute right-2 top-1/2 -translate-y-1/2">
                                 <i class="fi-rr-search text-gray-400"></i>
                             </button>
                         </div>
@@ -61,17 +71,15 @@
                 </div>
             </div>
             
-            <!-- Leave Credits Table -->
+            <!-- Leave Records Table -->
             <div class="overflow-x-auto">
                 <table class="table table-zebra w-full">
                     <thead>
                         <tr class="bg-gray-100">
                             <th class="text-gray-600">Employee</th>
+                            <th class="text-gray-600">Position</th>
                             <th class="text-gray-600">Department</th>
-                            <th class="text-gray-600">Vacation Leave</th>
-                            <th class="text-gray-600">Sick Leave</th>
-                            <th class="text-gray-600">Used Credits</th>
-                            <th class="text-gray-600">Total Balance</th>
+                            <th class="text-gray-600">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -79,91 +87,24 @@
                             <td class="flex items-center space-x-3">
                                 <div class="avatar">
                                     <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">DP</span>
+                                        <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
+                                            DP
+                                        </span>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="font-bold">Daniel Pombo</div>
-                                    <div class="text-xs text-gray-500">Software Developer</div>
+                                    <div class="text-xs text-gray-500">EMP-001</div>
                                 </div>
                             </td>
+                            <td>IT Specialist</td>
                             <td>IT Department</td>
-                            <td>15 days</td>
-                            <td>12 days</td>
-                            <td>8 days</td>
-                            <td>19 days</td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-green-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">JS</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Jane Smith</div>
-                                    <div class="text-xs text-gray-500">Accountant</div>
-                                </div>
+                            <td>
+                                <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord()">
+                                    <i class="fi-rr-eye"></i>
+                                    <span>View Record</span>
+                                </button>
                             </td>
-                            <td>Finance Department</td>
-                            <td>10 days</td>
-                            <td>8 days</td>
-                            <td>5 days</td>
-                            <td>13 days</td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-purple-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">RJ</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Robert Johnson</div>
-                                    <div class="text-xs text-gray-500">HR Specialist</div>
-                                </div>
-                            </td>
-                            <td>HR Department</td>
-                            <td>18 days</td>
-                            <td>15 days</td>
-                            <td>12 days</td>
-                            <td>21 days</td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-yellow-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">MW</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Maria Williams</div>
-                                    <div class="text-xs text-gray-500">Operations Manager</div>
-                                </div>
-                            </td>
-                            <td>Operations Department</td>
-                            <td>20 days</td>
-                            <td>15 days</td>
-                            <td>10 days</td>
-                            <td>25 days</td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-red-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">TB</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Thomas Brown</div>
-                                    <div class="text-xs text-gray-500">System Administrator</div>
-                                </div>
-                            </td>
-                            <td>IT Department</td>
-                            <td>12 days</td>
-                            <td>10 days</td>
-                            <td>6 days</td>
-                            <td>16 days</td>
                         </tr>
                     </tbody>
                 </table>
@@ -172,83 +113,63 @@
             <!-- Pagination -->
             <div class="flex justify-end mt-6">
                 <div class="btn-group">
-                    <button class="btn btn-sm">«</button>
-                    <button class="btn btn-sm btn-active">1</button>
-                    <button class="btn btn-sm">2</button>
-                    <button class="btn btn-sm">3</button>
-                    <button class="btn btn-sm">»</button>
+                    @if($leaveRecords->onFirstPage())
+                        <button class="btn btn-sm" disabled>«</button>
+                    @else
+                        <a href="{{ $leaveRecords->previousPageUrl() }}" class="btn btn-sm">«</a>
+                    @endif
+
+                    @for($i = 1; $i <= $leaveRecords->lastPage(); $i++)
+                        @if($i == $leaveRecords->currentPage())
+                            <button class="btn btn-sm btn-active">{{ $i }}</button>
+                        @else
+                            <a href="{{ $leaveRecords->url($i) }}" class="btn btn-sm">{{ $i }}</a>
+                        @endif
+                    @endfor
+
+                    @if($leaveRecords->hasMorePages())
+                        <a href="{{ $leaveRecords->nextPageUrl() }}" class="btn btn-sm">»</a>
+                    @else
+                        <button class="btn btn-sm" disabled>»</button>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Import Leave Credits Modal -->
-    <div class="modal" id="importModal">
-        <div class="modal-box">
-            <h3 class="font-bold text-lg">Import Leave Credits</h3>
-            <button class="btn btn-sm btn-circle absolute right-2 top-2" onclick="closeImportModal()">✕</button>
-            
-            <div class="py-4">
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700">Select File</span>
-                    </label>
-                    <input type="file" class="file-input file-input-bordered w-full" />
-                    <label class="label">
-                        <span class="label-text-alt text-gray-500">Supported formats: .xlsx, .csv</span>
-                    </label>
-                </div>
-                
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700">Leave Type</span>
-                    </label>
-                    <select class="select select-bordered w-full">
-                        <option disabled selected>Select leave type</option>
-                        <option>All Leave Types</option>
-                        <option>Vacation Leave</option>
-                        <option>Sick Leave</option>
-                    </select>
-                </div>
-                
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700">Action</span>
-                    </label>
-                    <select class="select select-bordered w-full">
-                        <option disabled selected>Select action</option>
-                        <option>Replace existing credits</option>
-                        <option>Add to existing credits</option>
-                        <option>Subtract from existing credits</option>
-                    </select>
-                </div>
-                
-                <div class="mt-4">
-                    <a href="#" class="text-sm text-blue-500 hover:underline flex items-center">
-                        <i class="fi-rr-download mr-1"></i>
-                        Download template
-                    </a>
-                </div>
-                
-                <div class="modal-action">
-                    <button class="btn btn-outline" onclick="closeImportModal()">Cancel</button>
-                    <button class="btn btn-primary">
-                        <i class="fi-rr-check mr-2"></i>
-                        Import Credits
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- JavaScript for modals -->
     <script>
-        function openImportModal() {
-            document.getElementById('importModal').classList.add('modal-open');
+        // Function to update URL with filter parameters
+        function updateFilters() {
+            const department = document.getElementById('department-filter').value;
+            const leaveType = document.getElementById('leave-type-filter').value;
+            const dateRange = document.getElementById('date-range-filter').value;
+            const search = document.getElementById('search-input').value;
+
+            // Build query string
+            const params = new URLSearchParams();
+            if (department !== 'all') params.append('department', department);
+            if (leaveType !== 'all') params.append('leave_type', leaveType);
+            if (dateRange !== 'all') params.append('date_range', dateRange);
+            if (search) params.append('search', search);
+
+            // Update URL and reload page
+            window.location.href = `${window.location.pathname}?${params.toString()}`;
         }
-        
-        function closeImportModal() {
-            document.getElementById('importModal').classList.remove('modal-open');
+
+        // Add event listeners for filters
+        document.getElementById('department-filter').addEventListener('change', updateFilters);
+        document.getElementById('leave-type-filter').addEventListener('change', updateFilters);
+        document.getElementById('date-range-filter').addEventListener('change', updateFilters);
+        document.getElementById('search-button').addEventListener('click', updateFilters);
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                updateFilters();
+            }
+        });
+
+        // Function to view leave record
+        function viewRecord() {
+            window.location.href = "/leave-records";
         }
     </script>
 </x-layouts.layout>

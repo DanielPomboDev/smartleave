@@ -1,9 +1,31 @@
+@php
+use App\Models\LeaveRequest;
+@endphp
+
 <x-layouts.layout>
     <x-slot:title>Department Leave Recommendation</x-slot:title>
     <x-slot:header>Department Leave Recommendation</x-slot:header>
 
     <div class="card bg-white shadow-md mb-6">
         <div class="card-body">
+            @if(session('success'))
+                <div class="alert alert-success mb-6">
+                    <div class="flex items-center">
+                        <i class="fi-rr-check-circle text-xl mr-2"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-error mb-6">
+                    <div class="flex items-center">
+                        <i class="fi-rr-cross-circle text-xl mr-2"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+
             <h2 class="card-title text-xl font-bold text-gray-800 mb-4">
                 <i class="fi-rr-check-circle text-green-500 mr-2"></i>
                 Department Leave Recommendation Process
@@ -12,7 +34,7 @@
             <!-- Step Indicator -->
             <div class="w-full py-4">
                 <ul class="steps steps-horizontal w-full">
-                    <li class="step step-primary">Review Request</li>
+                    <li class="step step-primary" id="step1Indicator">Review Request</li>
                     <li class="step" id="step2Indicator">Recommendation Decision</li>
                     <li class="step" id="step3Indicator">Confirmation</li>
                 </ul>
@@ -29,14 +51,13 @@
                         <!-- Employee Info -->
                         <div class="flex items-center mb-6 pb-4 border-b border-gray-200">
                             <div class="avatar mr-4">
-                                <div
-                                    class="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                                    <span class="text-white font-bold text-lg">DP</span>
+                                <div class="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                                    <span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">{{ strtoupper(substr($leaveRequest->user->first_name, 0, 1) . substr($leaveRequest->user->last_name, 0, 1)) }}</span>
                                 </div>
                             </div>
                             <div>
-                                <h4 class="text-xl font-bold text-gray-800">Daniel Pombo</h4>
-                                <p class="text-gray-600">IT Department • IT Specialist</p>
+                                <h4 class="text-xl font-bold text-gray-800">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</h4>
+                                <p class="text-gray-600">{{ $leaveRequest->user->department->name }} • {{ $leaveRequest->user->position }}</p>
                             </div>
                         </div>
 
@@ -44,54 +65,53 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Type of Leave</h5>
-                                <p class="font-medium text-gray-800 text-lg">Vacation Leave</p>
+                                <p class="font-medium text-gray-800 text-lg">{{ LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</p>
+                                @if($leaveRequest->subtype)
+                                    <p class="text-gray-600 mt-1">{{ $leaveRequest->subtype }}</p>
+                                @endif
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Applied On</h5>
-                                <p class="font-medium text-gray-800 text-lg">May 15, 2023</p>
+                                <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->created_at->format('M d, Y') }}</p>
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Inclusive Dates</h5>
-                                <p class="font-medium text-gray-800 text-lg">Jun 1-5, 2023</p>
+                                <p class="font-medium text-gray-800 text-lg">
+                                    @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                        {{ $leaveRequest->start_date->format('M d, Y') }}
+                                    @else
+                                        {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                    @endif
+                                </p>
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Number of Days</h5>
-                                <p class="font-medium text-gray-800 text-lg">5 days</p>
+                                <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->number_of_days }} days</p>
                             </div>
                         </div>
 
-                        <!-- Reason and Work Coverage -->
+                        <!-- Additional Details -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                                <h5 class="font-semibold text-blue-600 mb-3">Reason for Leave</h5>
-                                <p class="text-gray-700">
-                                    I am planning a family vacation to visit relatives. This has been planned for several months and all arrangements have been made.
-                                </p>
+                                <h5 class="font-semibold text-blue-600 mb-3">Where Leave Will Be Spent</h5>
+                                <p class="font-medium text-gray-800">{{ $leaveRequest->where_spent }}</p>
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                                <h5 class="font-semibold text-blue-600 mb-3">Work Coverage Plan</h5>
-                                <p class="text-gray-700 mb-3">
-                                    <span class="font-medium">Work Coverage:</span> 
-                                    <span>Jane Smith will handle my ongoing projects during my absence.</span>
-                                </p>
-                                <p class="text-gray-700">
-                                    <span class="font-medium">Critical Tasks:</span> 
-                                    <span>The quarterly report will be completed before my departure. All client meetings have been rescheduled.</span>
-                                </p>
+                                <h5 class="font-semibold text-blue-600 mb-3">Commutation</h5>
+                                <p class="font-medium text-gray-800">{{ $leaveRequest->commutation ? 'Requested' : 'Not Requested' }}</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex justify-end mt-6">
-                        <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
-                            onclick="nextStep(1)">
+                        <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(1)">
                             Next
                             <i class="fi-rr-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Step 2: Recommendation Decision -->
+                <!-- Step 2: Recommendation -->
                 <div id="step2" class="hidden space-y-6">
                     <h3 class="font-medium text-lg text-gray-800">Department Recommendation</h3>
 
@@ -191,85 +211,90 @@
         </div>
     </div>
 
+    @push('scripts')
     <script>
-        function nextStep(currentStep) {
-            // Hide current step
-            document.getElementById('step' + currentStep).classList.add('hidden');
+        let currentStep = 1;
+
+        function showStep(step) {
+            // Hide all steps
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
             
-            // Show next step
-            document.getElementById('step' + (currentStep + 1)).classList.remove('hidden');
+            // Show current step
+            document.getElementById('step' + step).classList.remove('hidden');
+
+            // Update step indicators
+            document.getElementById('step1Indicator').classList.remove('step-primary');
+            document.getElementById('step2Indicator').classList.remove('step-primary');
+            document.getElementById('step3Indicator').classList.remove('step-primary');
             
-            // Update step indicator
-            document.getElementById('step' + (currentStep + 1) + 'Indicator').classList.add('step-primary');
-            
-            // If moving to Step 3, update the summary
-            if (currentStep === 2) {
-                updateSummary();
-            }
+            // Set current step as active
+            document.getElementById('step' + step + 'Indicator').classList.add('step-primary');
         }
-        
-        function prevStep(currentStep) {
-            // Hide current step
-            document.getElementById('step' + currentStep).classList.add('hidden');
-            
-            // Show previous step
-            document.getElementById('step' + (currentStep - 1)).classList.remove('hidden');
-            
-            // Update step indicator
-            document.getElementById('step' + currentStep + 'Indicator').classList.remove('step-primary');
+
+        function nextStep(step) {
+            currentStep = step + 1;
+            showStep(currentStep);
         }
-        
-        function validateStep2AndProceed() {
-            const recommendation = document.querySelector('input[name="recommendation"]:checked').value;
-            
-            if (recommendation === 'disapprove') {
-                const disapprovalReason = document.querySelector('textarea[name="disapproval_reason"]').value.trim();
-                
-                if (!disapprovalReason) {
-                    alert('Please provide a reason for disapproval.');
-                    return;
-                }
-            }
-            
-            nextStep(2);
+
+        function prevStep(step) {
+            currentStep = step - 1;
+            showStep(currentStep);
         }
-        
+
         function toggleReasonInput() {
             const recommendation = document.querySelector('input[name="recommendation"]:checked').value;
-            const approvalReasonContainer = document.getElementById('approvalReasonContainer');
-            const disapprovalReasonContainer = document.getElementById('disapprovalReasonContainer');
-            
+            const approvalContainer = document.getElementById('approvalReasonContainer');
+            const disapprovalContainer = document.getElementById('disapprovalReasonContainer');
+
             if (recommendation === 'approve') {
-                approvalReasonContainer.classList.remove('hidden');
-                disapprovalReasonContainer.classList.add('hidden');
+                approvalContainer.classList.remove('hidden');
+                disapprovalContainer.classList.add('hidden');
             } else {
-                approvalReasonContainer.classList.add('hidden');
-                disapprovalReasonContainer.classList.remove('hidden');
+                approvalContainer.classList.add('hidden');
+                disapprovalContainer.classList.remove('hidden');
             }
         }
-        
-        function updateSummary() {
+
+        function validateStep2AndProceed() {
             const recommendation = document.querySelector('input[name="recommendation"]:checked').value;
-            document.getElementById('summaryRecommendation').textContent = 
-                recommendation === 'approve' ? 'Approve' : 'Disapprove';
-            
-            // Update reason
-            let reasonText = '';
-            if (recommendation === 'approve') {
-                reasonText = document.querySelector('textarea[name="approval_reason"]').value;
-            } else {
-                reasonText = document.querySelector('textarea[name="disapproval_reason"]').value;
+            const disapprovalReason = document.querySelector('textarea[name="disapproval_reason"]').value;
+
+            if (recommendation === 'disapprove' && !disapprovalReason.trim()) {
+                alert('Please provide a reason for disapproval');
+                return;
             }
-            
-            document.getElementById('summaryReason').textContent = reasonText || 'No reason provided.';
+
+            // Update summary
+            document.getElementById('summaryRecommendation').textContent = recommendation === 'approve' ? 'Approve' : 'Disapprove';
+            document.getElementById('summaryReason').textContent = recommendation === 'approve' 
+                ? document.querySelector('textarea[name="approval_reason"]').value || 'No reason provided'
+                : disapprovalReason;
+
+            nextStep(2);
         }
-        
-        // Initialize the form when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up initial state
-            toggleReasonInput();
+
+        // Add form submission handler
+        document.getElementById('approvalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const recommendation = document.querySelector('input[name="recommendation"]:checked').value;
+            const disapprovalReason = document.querySelector('textarea[name="disapproval_reason"]').value;
+
+            if (recommendation === 'disapprove' && !disapprovalReason.trim()) {
+                alert('Please provide a reason for disapproval');
+                return;
+            }
+
+            // Submit the form
+            this.submit();
         });
+
+        // Initialize
+        showStep(1);
     </script>
+    @endpush
 </x-layouts.layout>
 
 

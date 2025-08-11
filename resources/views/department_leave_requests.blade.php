@@ -1,3 +1,7 @@
+@php
+use App\Models\LeaveRequest;
+@endphp
+
 <x-layouts.layout>
     <x-slot:title>Department Leave Requests</x-slot:title>
     <x-slot:header>Department Leave Requests</x-slot:header>
@@ -10,16 +14,16 @@
             </h2>
             
             <!-- Filter Controls -->
-            <div class="flex flex-wrap gap-4 mb-6">
+            <form method="GET" action="{{ route('department.leave.requests') }}" class="flex flex-wrap gap-4 mb-6">
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium text-gray-700">Filter by Status</span>
                     </label>
-                    <select class="select select-bordered border-gray-300 focus:border-blue-500">
-                        <option value="all">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
+                    <select name="status" class="select select-bordered border-gray-300 focus:border-blue-500" onchange="this.form.submit()">
+                        <option value="all" {{ $filters['status'] === 'all' ? 'selected' : '' }}>All Statuses</option>
+                        <option value="pending" {{ $filters['status'] === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="approved" {{ $filters['status'] === 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="rejected" {{ $filters['status'] === 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </div>
                 
@@ -27,13 +31,11 @@
                     <label class="label">
                         <span class="label-text font-medium text-gray-700">Filter by Leave Type</span>
                     </label>
-                    <select class="select select-bordered border-gray-300 focus:border-blue-500">
-                        <option value="all">All Types</option>
-                        <option value="vacation">Vacation Leave</option>
-                        <option value="sick">Sick Leave</option>
-                        <option value="emergency">Emergency Leave</option>
-                        <option value="maternity">Maternity Leave</option>
-                        <option value="paternity">Paternity Leave</option>
+                    <select name="leave_type" class="select select-bordered border-gray-300 focus:border-blue-500" onchange="this.form.submit()">
+                        <option value="all" {{ $filters['leave_type'] === 'all' ? 'selected' : '' }}>All Types</option>
+                        @foreach(LeaveRequest::LEAVE_TYPES as $type => $label)
+                            <option value="{{ $type }}" {{ $filters['leave_type'] === $type ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
                 
@@ -42,8 +44,8 @@
                         <span class="label-text font-medium text-gray-700">Date Range</span>
                     </label>
                     <div class="flex space-x-2">
-                        <input type="date" class="input input-bordered border-gray-300 focus:border-blue-500" placeholder="From">
-                        <input type="date" class="input input-bordered border-gray-300 focus:border-blue-500" placeholder="To">
+                        <input type="date" name="start_date" class="input input-bordered border-gray-300 focus:border-blue-500" value="{{ $filters['start_date'] }}" placeholder="From">
+                        <input type="date" name="end_date" class="input input-bordered border-gray-300 focus:border-blue-500" value="{{ $filters['end_date'] }}" placeholder="To">
                     </div>
                 </div>
                 
@@ -52,13 +54,13 @@
                         <span class="label-text font-medium text-gray-700">Search</span>
                     </label>
                     <div class="relative">
-                        <input type="text" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10" placeholder="Search by name...">
-                        <button class="absolute inset-y-0 right-0 px-3 flex items-center">
+                        <input type="text" name="search" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10" value="{{ $filters['search'] }}" placeholder="Search by name...">
+                        <button type="submit" class="absolute inset-y-0 right-0 px-3 flex items-center">
                             <i class="fi-rr-search text-gray-400"></i>
                         </button>
                     </div>
                 </div>
-            </div>
+            </form>
             
             <!-- Leave Requests Table -->
             <div class="overflow-x-auto">
@@ -75,153 +77,55 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">DP</span>
+                        @forelse($leaveRequests as $leaveRequest)
+                            <tr>
+                                <td class="flex items-center space-x-3">
+                                    <div class="avatar">
+                                        <div class="mask mask-squircle w-8 h-8">
+                                            <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
+                                                {{ strtoupper(substr($leaveRequest->user->first_name, 0, 1) . substr($leaveRequest->user->last_name, 0, 1)) }}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Daniel Pombo</div>
-                                    <div class="text-xs text-gray-500">IT Specialist</div>
-                                </div>
-                            </td>
-                            <td>Vacation Leave</td>
-                            <td>May 15, 2023</td>
-                            <td>Jun 1-5, 2023</td>
-                            <td>5</td>
-                            <td>
-                                <span class="badge badge-warning">Pending</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Daniel Pombo', 'Vacation Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-success" title="Approve" onclick="window.location.href='{{ route('department.leave.approve.start', ['id' => 1]) }}'">
-                                        <i class="fi-rr-check text-white"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-error" title="Reject">
-                                        <i class="fi-rr-cross text-white"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-green-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">JS</span>
+                                    <div>
+                                        <div class="font-bold">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</div>
+                                        <div class="text-xs text-gray-500">{{ $leaveRequest->user->position }}</div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Jane Smith</div>
-                                    <div class="text-xs text-gray-500">IT Analyst</div>
-                                </div>
-                            </td>
-                            <td>Sick Leave</td>
-                            <td>May 20, 2023</td>
-                            <td>May 22, 2023</td>
-                            <td>1</td>
-                            <td>
-                                <span class="badge badge-success">Approved</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Jane Smith', 'Sick Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-purple-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">RJ</span>
+                                </td>
+                                <td>{{ LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</td>
+                                <td>{{ $leaveRequest->created_at->format('M d, Y') }}</td>
+                                <td>
+                                    @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                        {{ $leaveRequest->start_date->format('M d, Y') }}
+                                    @else
+                                        {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                    @endif
+                                </td>
+                                <td>{{ $leaveRequest->number_of_days }}</td>
+                                <td>
+                                    @if($leaveRequest->isPending())
+                                        <span class="badge badge-warning">Pending</span>
+                                    @elseif($leaveRequest->isApproved())
+                                        <span class="badge badge-success">Approved</span>
+                                    @elseif($leaveRequest->isDisapproved())
+                                        <span class="badge badge-error">Rejected</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="flex space-x-2">
+                                        <a href="{{ route('department.leave.approve.start', $leaveRequest->id) }}" class="btn btn-xs btn-primary">
+                                            View
+                                        </a>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Robert Johnson</div>
-                                    <div class="text-xs text-gray-500">Web Developer</div>
-                                </div>
-                            </td>
-                            <td>Emergency Leave</td>
-                            <td>May 17, 2023</td>
-                            <td>May 18-19, 2023</td>
-                            <td>2</td>
-                            <td>
-                                <span class="badge badge-warning">Pending</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Robert Johnson', 'Emergency Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-success" title="Approve" onclick="window.location.href='{{ route('department.leave.approve.start', ['id' => 2]) }}'">
-                                        <i class="fi-rr-check text-white"></i>
-                                    </button>
-                                    <button class="btn btn-xs btn-error" title="Reject">
-                                        <i class="fi-rr-cross text-white"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-orange-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">AW</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Alice Williams</div>
-                                    <div class="text-xs text-gray-500">System Administrator</div>
-                                </div>
-                            </td>
-                            <td>Vacation Leave</td>
-                            <td>May 8, 2023</td>
-                            <td>May 10-12, 2023</td>
-                            <td>3</td>
-                            <td>
-                                <span class="badge badge-success">Approved</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Alice Williams', 'Vacation Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-red-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">TB</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Thomas Brown</div>
-                                    <div class="text-xs text-gray-500">Network Engineer</div>
-                                </div>
-                            </td>
-                            <td>Sick Leave</td>
-                            <td>May 5, 2023</td>
-                            <td>May 6, 2023</td>
-                            <td>1</td>
-                            <td>
-                                <span class="badge badge-error">Rejected</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <button class="btn btn-xs btn-ghost" title="View Details" onclick="openLeaveModal('Thomas Brown', 'Sick Leave')">
-                                        <i class="fi-rr-eye text-blue-500"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-gray-500">
+                                    No leave requests found
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -229,11 +133,25 @@
             <!-- Pagination -->
             <div class="flex justify-end mt-6">
                 <div class="btn-group">
-                    <button class="btn btn-sm">«</button>
-                    <button class="btn btn-sm btn-active">1</button>
-                    <button class="btn btn-sm">2</button>
-                    <button class="btn btn-sm">3</button>
-                    <button class="btn btn-sm">»</button>
+                    @if($leaveRequests->onFirstPage())
+                        <button class="btn btn-sm" disabled>«</button>
+                    @else
+                        <a href="{{ $leaveRequests->previousPageUrl() }}" class="btn btn-sm">«</a>
+                    @endif
+
+                    @for($i = 1; $i <= $leaveRequests->lastPage(); $i++)
+                        @if($i == $leaveRequests->currentPage())
+                            <button class="btn btn-sm btn-active">{{ $i }}</button>
+                        @else
+                            <a href="{{ $leaveRequests->url($i) }}" class="btn btn-sm">{{ $i }}</a>
+                        @endif
+                    @endfor
+
+                    @if($leaveRequests->hasMorePages())
+                        <a href="{{ $leaveRequests->nextPageUrl() }}" class="btn btn-sm">»</a>
+                    @else
+                        <button class="btn btn-sm" disabled>»</button>
+                    @endif
                 </div>
             </div>
         </div>

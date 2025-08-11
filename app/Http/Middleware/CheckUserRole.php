@@ -26,6 +26,8 @@ class CheckUserRole
                 return redirect('/hr-dashboard');
             } elseif (Auth::user()->user_type === 'department_admin') {
                 return redirect('/department-dashboard');
+            } elseif (Auth::user()->user_type === 'mayor') {
+                return redirect('/mayor-dashboard');
             } else {
                 return redirect('/employee-dashboard');
             }
@@ -34,4 +36,3 @@ class CheckUserRole
         return $next($request);
     }
 }
-
