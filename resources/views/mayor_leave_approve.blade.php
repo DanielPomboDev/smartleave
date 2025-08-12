@@ -30,7 +30,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Type of Leave</h5>
-                        <p class="font-medium text-gray-800 text-lg">{{ $leaveTypes[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</p>
+                        <p class="font-medium text-gray-800 text-lg">{{ ucfirst($leaveRequest->leave_type) }} Leave</p>
                     </div>
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Applied On</h5>
@@ -59,51 +59,76 @@
                 </div>
             </div>
 
-            <!-- Department Recommendation -->
+            <!-- Department Recommendation (first recommendation shown if exists) -->
+            @php
+                $deptRec = optional($leaveRequest->recommendations()->latest()->first());
+            @endphp
+            @if($deptRec)
             <div class="p-4 bg-white rounded-lg border border-blue-200 shadow-sm mb-6">
                 <h4 class="font-semibold text-blue-600 mb-3">Department Admin Recommendation</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Authorized Personnel</label>
-                        <p class="font-medium text-gray-800">{{ $departmentRecommendation->name }}</p>
-                        <p class="text-sm text-gray-500">{{ $departmentRecommendation->position }}</p>
+                        <p class="font-medium text-gray-800">{{ $deptRec->departmentAdmin->first_name ?? '' }} {{ $deptRec->departmentAdmin->last_name ?? '' }}</p>
+                        <p class="text-sm text-gray-500">Department Head</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Decision</label>
-                        <p class="font-medium text-gray-800 text-capitalize">{{ $departmentRecommendation->decision }}</p>
-                        <p class="text-sm text-gray-500 mt-1">{{ $departmentRecommendation->reason }}</p>
+                        <p class="font-medium text-gray-800 text-capitalize">{{ $deptRec->recommendation }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ $deptRec->remarks }}</p>
                     </div>
                 </div>
             </div>
+            @endif
 
-            <!-- HR Approval -->
+            <!-- HR Approval Details (latest HR approval) -->
+            @php
+                $hrApproval = optional($leaveRequest->approvals()->latest()->first());
+            @endphp
+            @if($hrApproval)
             <div class="p-4 bg-white rounded-lg border border-green-200 shadow-sm mb-6">
                 <h4 class="font-semibold text-green-600 mb-3">HR Manager Approval</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">HR Personnel</label>
-                        <p class="font-medium text-gray-800">{{ $hrApproval->name }}</p>
-                        <p class="text-sm text-gray-500">{{ $hrApproval->position }}</p>
+                        <p class="font-medium text-gray-800">{{ $hrApproval->hrManager->first_name ?? '' }} {{ $hrApproval->hrManager->last_name ?? '' }}</p>
+                        <p class="text-sm text-gray-500">HR Manager</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Decision</label>
-                        <p class="font-medium text-gray-800 text-capitalize">{{ $hrApproval->decision }}</p>
-                        <p class="text-sm text-gray-500 mt-1">{{ $hrApproval->comments }}</p>
+                        <p class="font-medium text-gray-800 text-capitalize">{{ $hrApproval->approval }}</p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            @if($hrApproval->approval === 'approve')
+                                @if($hrApproval->approved_for === 'with_pay')
+                                    Approved for days with pay
+                                @elseif($hrApproval->approved_for === 'without_pay')
+                                    Approved for days without pay
+                                @else
+                                    {{ $hrApproval->approved_for }}
+                                @endif
+                            @else
+                                {{ $hrApproval->dissapproved_due_to }}
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>
+            @endif
 
-            <!-- Final Approval Action (UI only, no form) -->
-            <div class="flex justify-end mt-6">
-                <button class="btn btn-success">
+            <!-- Final Approval Action -->
+            <form method="POST" action="{{ route('mayor.leave.approve.process', $leaveRequest->id) }}" class="flex justify-end mt-6">
+                @csrf
+                <input type="hidden" name="decision" id="decisionInput" value="approve" />
+                <input type="hidden" name="comments" id="commentsInput" />
+                <button type="submit" class="btn btn-success" onclick="document.getElementById('decisionInput').value='approve'">
                     <i class="fi-rr-check mr-2"></i>
                     Approve
                 </button>
-                <button class="btn btn-error ml-2">
+                <button type="submit" class="btn btn-error ml-2" onclick="document.getElementById('decisionInput').value='disapprove'">
                     <i class="fi-rr-cross mr-2"></i>
                     Reject
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 </x-layouts.layout> 

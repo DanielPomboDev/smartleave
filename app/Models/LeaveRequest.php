@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LeaveRequest extends Model
 {
@@ -11,7 +12,8 @@ class LeaveRequest extends Model
     public const TYPE_SICK = 'sick';
 
     public const STATUS_PENDING = 'pending';
-    public const STATUS_DEPARTMENT_APPROVED = 'department_approved';
+    public const STATUS_RECOMMENDED = 'recommended';
+    public const STATUS_HR_APPROVED = 'hr_approved';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_DISAPPROVED = 'disapproved';
 
@@ -69,7 +71,8 @@ class LeaveRequest extends Model
      */
     public const STATUSES = [
         self::STATUS_PENDING => 'Pending',
-        self::STATUS_DEPARTMENT_APPROVED => 'Department Approved',
+        self::STATUS_RECOMMENDED => 'Recommended',
+        self::STATUS_HR_APPROVED => 'HR Approved',
         self::STATUS_APPROVED => 'Approved',
         self::STATUS_DISAPPROVED => 'Disapproved',
     ];
@@ -80,6 +83,16 @@ class LeaveRequest extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function recommendations()
+    {
+        return $this->hasMany(\App\Models\LeaveRecommendation::class, 'leave_id');
+    }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(\App\Models\LeaveApproval::class, 'leave_id');
     }
 
     /**
@@ -104,5 +117,21 @@ class LeaveRequest extends Model
     public function isDisapproved(): bool
     {
         return $this->status === self::STATUS_DISAPPROVED;
+    }
+
+    /**
+     * Check if the leave request is HR approved.
+     */
+    public function isHrApproved(): bool
+    {
+        return $this->status === self::STATUS_HR_APPROVED;
+    }
+
+    /**
+     * Check if the leave request is recommended.
+     */
+    public function isRecommended(): bool
+    {
+        return $this->status === self::STATUS_RECOMMENDED;
     }
 }

@@ -9,7 +9,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-blue-600">Pending Requests</p>
-                        <h3 class="text-3xl font-bold text-gray-800 mt-1">12</h3>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $stats['pending'] ?? 0 }}</h3>
                     </div>
                     <div class="bg-blue-100 p-3 rounded-full">
                         <!-- Heroicon: Clock -->
@@ -24,7 +24,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-green-600">Approved This Month</p>
-                        <h3 class="text-3xl font-bold text-gray-800 mt-1">28</h3>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $stats['approved_this_month'] ?? 0 }}</h3>
                     </div>
                     <div class="bg-green-100 p-3 rounded-full">
                         <!-- Heroicon: Check Circle -->
@@ -39,7 +39,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-red-600">Rejected This Month</p>
-                        <h3 class="text-3xl font-bold text-gray-800 mt-1">5</h3>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $stats['rejected_this_month'] ?? 0 }}</h3>
                     </div>
                     <div class="bg-red-100 p-3 rounded-full">
                         <!-- Heroicon: X Circle -->
@@ -54,7 +54,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-purple-600">Total Employees</p>
-                        <h3 class="text-3xl font-bold text-gray-800 mt-1">42</h3>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $stats['total_employees'] ?? 0 }}</h3>
                     </div>
                     <div class="bg-purple-100 p-3 rounded-full">
                         <!-- Heroicon: Users -->
@@ -93,84 +93,56 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">DP</span>
+                        @forelse($hrQueue as $leaveRequest)
+                            <tr>
+                                <td class="flex items-center space-x-3">
+                                    <div class="avatar">
+                                        <div class="mask mask-squircle w-8 h-8">
+                                            <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
+                                                {{ strtoupper(substr($leaveRequest->user->first_name, 0, 1) . substr($leaveRequest->user->last_name, 0, 1)) }}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Daniel Pombo</div>
-                                    <div class="text-xs text-gray-500">IT Department</div>
-                                </div>
-                            </td>
-                            <td>Vacation Leave</td>
-                            <td>Jun 1-5, 2023</td>
-                            <td>5</td>
-                            <td>
-                                <span class="badge badge-warning">Pending</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-green-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">JS</span>
+                                    <div>
+                                        <div class="font-bold">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</div>
+                                        <div class="text-xs text-gray-500">{{ $leaveRequest->user->department->name ?? '' }}</div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Jane Smith</div>
-                                    <div class="text-xs text-gray-500">Finance Department</div>
-                                </div>
-                            </td>
-                            <td>Sick Leave</td>
-                            <td>May 22, 2023</td>
-                            <td>1</td>
-                            <td>
-                                <span class="badge badge-success">Approved</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-purple-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">RJ</span>
+                                </td>
+                                <td>{{ App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</td>
+                                <td>
+                                    @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                        {{ $leaveRequest->start_date->format('M d, Y') }}
+                                    @else
+                                        {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                    @endif
+                                </td>
+                                <td>{{ $leaveRequest->number_of_days }}</td>
+                                <td>
+                                    @if($leaveRequest->status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                                        <span class="badge badge-info">Recommended</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_HR_APPROVED)
+                                        <span class="badge badge-primary">HR Approved</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_APPROVED)
+                                        <span class="badge badge-success">Approved</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_DISAPPROVED)
+                                        <span class="badge badge-error">Rejected</span>
+                                    @else
+                                        <span class="badge">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="flex space-x-2">
+                                        <a href="{{ route('leave.approve.start', ['id' => $leaveRequest->id]) }}" class="btn btn-xs btn-primary">
+                                            View
+                                        </a>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Robert Johnson</div>
-                                    <div class="text-xs text-gray-500">HR Department</div>
-                                </div>
-                            </td>
-                            <td>Emergency Leave</td>
-                            <td>May 18-19, 2023</td>
-                            <td>2</td>
-                            <td>
-                                <span class="badge badge-warning">Pending</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-500">No leave requests in HR queue</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

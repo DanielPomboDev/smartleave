@@ -6,20 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('leave_recommendations', function (Blueprint $table) {
-            $table->bigIncrements('recommendation_id');
-            $table->string('department_admin_id');
+        Schema::create('leave_approvals', function (Blueprint $table) {
+            $table->bigIncrements('approval_id');
+            $table->string('hr_manager_id')->nullable();
             $table->unsignedBigInteger('leave_id');
-            $table->enum('recommendation', ['approve', 'disapprove']);
-            $table->text('remarks')->nullable();
+            $table->enum('approval', ['approve', 'disapprove']);
+            $table->string('approved_for')->nullable();
+            $table->text('dissapproved_due_to')->nullable();
             $table->timestamps();
 
-            $table->foreign('department_admin_id')
+            $table->foreign('hr_manager_id')
                 ->references('user_id')
                 ->on('users')
                 ->onDelete('cascade');
@@ -30,11 +28,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('leave_recommendations');
+        Schema::dropIfExists('leave_approvals');
     }
 };

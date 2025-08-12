@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class LeaveRecommendation extends Model
+class LeaveApproval extends Model
 {
-    protected $primaryKey = 'recommendation_id';
+    protected $primaryKey = 'approval_id';
 
     protected $fillable = [
-        'recommendation_id',
-        'department_admin_id',
+        'approval_id',
+        'hr_manager_id',
         'leave_id',
-        'recommendation',
-        'remarks',
+        'approval',
+        'approved_for',
+        'dissapproved_due_to',
     ];
 
     public function leaveRequest(): BelongsTo
@@ -22,8 +23,8 @@ class LeaveRecommendation extends Model
         return $this->belongsTo(LeaveRequest::class, 'leave_id');
     }
 
-    public function departmentAdmin(): BelongsTo
+    public function hrManager(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'department_admin_id', 'user_id');
+        return $this->belongsTo(User::class, 'hr_manager_id', 'user_id');
     }
 }

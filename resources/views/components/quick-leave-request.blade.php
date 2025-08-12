@@ -26,6 +26,10 @@
                 
                 <!-- Vacation Subtypes (hidden by default) -->
                 <div id="quickVacationSubtypes" class="pl-6 hidden space-y-2">
+                    <div class="alert alert-info alert-sm mb-2">
+                        <i class="fi-rr-info"></i>
+                        <span class="text-xs">Vacation leave must be applied at least 5 days before the start date</span>
+                    </div>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="vacationSubtype" value="employment" class="radio radio-xs radio-primary">
                         <span class="text-sm">To seek employment</span>
@@ -46,6 +50,10 @@
                 
                 <!-- Sick Leave Subtypes (hidden by default) -->
                 <div id="quickSickSubtypes" class="pl-6 hidden space-y-2">
+                    <div class="alert alert-success alert-sm mb-2">
+                        <i class="fi-rr-check"></i>
+                        <span class="text-xs">Sick leave can be applied after the leave period</span>
+                    </div>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="sickSubtype" value="hospital" class="radio radio-xs radio-primary">
                         <span class="text-sm">In Hospital</span>
@@ -79,16 +87,23 @@
                 <div class="form-control">
                     <label class="label py-1">
                         <span class="label-text font-medium">Start Date</span>
+                        <span class="label-text-alt text-warning" id="startDateWarning"></span>
                     </label>
-                    <input type="date" name="startDate" class="input input-bordered input-sm w-full" required onchange="calculateDays()">
+                    <input type="date" name="startDate" id="startDate" class="input input-bordered input-sm w-full" required onchange="validateDates()">
                 </div>
                 
                 <div class="form-control">
                     <label class="label py-1">
                         <span class="label-text font-medium">End Date</span>
                     </label>
-                    <input type="date" name="endDate" class="input input-bordered input-sm w-full" required onchange="calculateDays()">
+                    <input type="date" name="endDate" id="endDate" class="input input-bordered input-sm w-full" required onchange="validateDates()">
                 </div>
+            </div>
+            
+            <!-- Date validation message -->
+            <div id="dateValidationMessage" class="alert alert-warning hidden">
+                <i class="fi-rr-exclamation"></i>
+                <span id="dateValidationText"></span>
             </div>
             
             <div class="form-control">
@@ -253,20 +268,9 @@
                     }
                 }
             } else if (currentStep === 2) {
-                const startDate = document.querySelector('input[name="startDate"]').value;
-                const endDate = document.querySelector('input[name="endDate"]').value;
-                
-                if (!startDate || !endDate) {
-                    showErrorMessage(2, 'Please select both start and end dates');
-                    return;
-                }
-                
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                
-                if (end < start) {
-                    showErrorMessage(2, 'End date cannot be earlier than start date');
-                    return;
+                // Use the comprehensive date validation function
+                if (!validateDates()) {
+                    return; // validateDates() will show the appropriate error message
                 }
             }
             
@@ -299,6 +303,50 @@
             } else if (type === 'sick') {
                 document.getElementById('quickSickSubtypes').classList.remove('hidden');
             }
+            
+            // Update date restrictions based on leave type
+            updateDateRestrictions(type);
+            
+            // Clear any existing date validation messages
+            const validationMessage = document.getElementById('dateValidationMessage');
+            if (validationMessage) {
+                validationMessage.classList.add('hidden');
+            }
+        }
+        
+        function updateDateRestrictions(leaveType) {
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (leaveType === 'vacation') {
+                // For vacation leave, set minimum start date to 5 days from today
+                const minVacationDate = new Date();
+                minVacationDate.setDate(minVacationDate.getDate() + 5);
+                const minVacationDateStr = minVacationDate.toISOString().split('T')[0];
+                
+                if (startDateInput) {
+                    startDateInput.min = minVacationDateStr;
+                    // If current start date is less than minimum, update it
+                    if (startDateInput.value && startDateInput.value < minVacationDateStr) {
+                        startDateInput.value = minVacationDateStr;
+                        // Also update end date if it's before the new start date
+                        if (endDateInput && endDateInput.value < minVacationDateStr) {
+                            endDateInput.value = minVacationDateStr;
+                        }
+                    }
+                }
+            } else if (leaveType === 'sick') {
+                // For sick leave, allow dates from today onwards
+                if (startDateInput) {
+                    startDateInput.min = today;
+                }
+            }
+            
+            // Re-validate dates after changing restrictions
+            if (startDateInput && endDateInput) {
+                validateDates();
+            }
         }
         
         function toggleQuickOtherSpecify(type) {
@@ -314,6 +362,67 @@
         function toggleLocationSpecify() {
             const isAbroad = document.querySelector('input[name="locationType"]:checked')?.value === 'abroad';
             document.getElementById('locationSpecifyContainer').classList.toggle('hidden', !isAbroad);
+        }
+        
+        function validateDates() {
+            const startDate = document.querySelector('input[name="startDate"]').value;
+            const endDate = document.querySelector('input[name="endDate"]').value;
+            const leaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+            
+            const validationMessage = document.getElementById('dateValidationMessage');
+            const validationText = document.getElementById('dateValidationText');
+            const startDateWarning = document.getElementById('startDateWarning');
+            
+            // Hide previous validation messages
+            validationMessage.classList.add('hidden');
+            startDateWarning.textContent = '';
+            
+            if (!startDate || !endDate) {
+                return false;
+            }
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time to start of day
+            
+            // Check if end date is before start date
+            if (end < start) {
+                validationText.textContent = 'End date cannot be earlier than start date';
+                validationMessage.classList.remove('hidden');
+                return false;
+            }
+            
+            // Check if start date is in the past
+            if (start < today) {
+                validationText.textContent = 'Start date cannot be in the past';
+                validationMessage.classList.remove('hidden');
+                return false;
+            }
+            
+            // Vacation leave specific validation (5 days advance notice)
+            if (leaveType === 'vacation') {
+                const daysDifference = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
+                
+                if (daysDifference < 5) {
+                    validationText.textContent = 'Vacation leave must be applied at least 5 days before the start date';
+                    validationMessage.classList.remove('hidden');
+                    startDateWarning.textContent = `(${daysDifference} days notice - requires 5 days minimum)`;
+                    return false;
+                } else {
+                    startDateWarning.textContent = `(${daysDifference} days notice - OK)`;
+                }
+            }
+            
+            // Sick leave can be applied after the leave period
+            if (leaveType === 'sick') {
+                // Allow sick leave to be applied even after the leave period
+                // No warning text needed
+            }
+            
+            // If all validations pass, calculate days
+            calculateDays();
+            return true;
         }
         
         function calculateDays() {
@@ -365,6 +474,12 @@
         
         // Submit the leave request
         function submitQuickLeaveRequest() {
+            // Final validation before submission
+            if (!validateDates()) {
+                hideQuickConfirmModal();
+                return;
+            }
+            
             // Hide the confirmation modal
             hideQuickConfirmModal();
             
@@ -381,12 +496,25 @@
             const startDateInput = document.querySelector('input[name="startDate"]');
             const endDateInput = document.querySelector('input[name="endDate"]');
             
-            if (startDateInput && !startDateInput.value) {
-                startDateInput.value = today;
+            // Set min dates to prevent selecting past dates
+            if (startDateInput) {
+                startDateInput.min = today;
+                if (!startDateInput.value) {
+                    startDateInput.value = today;
+                }
             }
             
-            if (endDateInput && !endDateInput.value) {
-                endDateInput.value = today;
+            if (endDateInput) {
+                endDateInput.min = today;
+                if (!endDateInput.value) {
+                    endDateInput.value = today;
+                }
+            }
+            
+            // Set initial date restrictions based on default leave type (if any is selected)
+            const selectedLeaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+            if (selectedLeaveType) {
+                updateDateRestrictions(selectedLeaveType);
             }
             
             // Calculate initial number of days
@@ -397,6 +525,27 @@
             if (philippinesRadio) {
                 philippinesRadio.checked = true;
             }
+            
+            // Add event listener to update end date min when start date changes
+            if (startDateInput) {
+                startDateInput.addEventListener('change', function() {
+                    if (endDateInput && this.value) {
+                        endDateInput.min = this.value;
+                        if (endDateInput.value && endDateInput.value < this.value) {
+                            endDateInput.value = this.value;
+                        }
+                        validateDates();
+                    }
+                });
+            }
+            
+            // Add event listener to update date restrictions when leave type changes
+            const leaveTypeInputs = document.querySelectorAll('input[name="leaveType"]');
+            leaveTypeInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    updateDateRestrictions(this.value);
+                });
+            });
             
             // Set up event handlers for the confirmation modal buttons
             const cancelSubmit = document.getElementById('quickCancelSubmit');

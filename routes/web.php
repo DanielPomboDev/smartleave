@@ -114,12 +114,7 @@ Route::post('/leave/{id}/process', [LeaveController::class, 'processApproval'])-
 
 // HR Manager routes - require authentication
 Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
-    Route::get('/dashboard', function () {
-        if (Auth::user()->user_type !== 'hr') {
-            return redirect('/employee-dashboard');
-        }
-        return view('hr_dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [HRController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/employees', [HRController::class, 'employees'])->name('employees');
     Route::post('/employees', [HRController::class, 'store'])->name('employees.store');
@@ -163,45 +158,8 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/mayor-dashboard', [LeaveController::class, 'mayorDashboard'])->name('mayor.dashboard');
     Route::get('/mayor-leave-requests', [LeaveController::class, 'mayorLeaveRequests'])->name('mayor.leave.requests');
-    Route::get('/mayor-leave-approve/{id}', function ($id) {
-        // Sample data for the final approval page
-        $leaveRequest = (object) [
-            'user' => (object) [
-                'first_name' => 'Juan',
-                'last_name' => 'Dela Cruz',
-                'position' => 'IT Specialist',
-                'department' => (object) ['name' => 'IT Department']
-            ],
-            'leave_type' => 'vacation',
-            'created_at' => now(),
-            'start_date' => now(),
-            'end_date' => now()->addDays(2),
-            'number_of_days' => 3,
-            'where_spent' => 'Within the Philippines',
-            'commutation' => true,
-            'reason' => 'Family vacation',
-            'attachments' => ['itinerary.pdf'],
-            'id' => $id
-        ];
-        $departmentRecommendation = (object) [
-            'name' => 'John Smith',
-            'position' => 'Department Head',
-            'decision' => 'approve',
-            'reason' => 'Leave request is valid and within policy guidelines.'
-        ];
-        $hrApproval = (object) [
-            'name' => 'Maria Santos',
-            'position' => 'HR Manager',
-            'decision' => 'approve',
-            'comments' => 'Approved for 3 days with pay.'
-        ];
-        $leaveTypes = [
-            'vacation' => 'Vacation Leave',
-            'sick' => 'Sick Leave',
-            'emergency' => 'Emergency Leave'
-        ];
-        return view('mayor_leave_approve', compact('leaveRequest', 'departmentRecommendation', 'hrApproval', 'leaveTypes'));
-    })->name('mayor.leave.approve.start');
+    Route::get('/mayor-leave-approve/{id}', [LeaveController::class, 'showMayorApproval'])->name('mayor.leave.approve.start');
+    Route::post('/mayor-leave-approve/{id}/process', [LeaveController::class, 'processMayorApproval'])->name('mayor.leave.approve.process');
     Route::get('/mayor-profile', function () {
         return view('mayor_profile');
     })->name('mayor.profile');

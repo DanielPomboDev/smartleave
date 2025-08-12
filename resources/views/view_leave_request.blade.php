@@ -61,7 +61,20 @@
                 <!-- Status -->
                 <div class="mb-6">
                     <h5 class="font-semibold text-blue-600 mb-3">Status</h5>
-                    <span class="badge badge-warning">Pending</span>
+                    @php($status = $leaveRequest->status)
+                    @if($status === App\Models\LeaveRequest::STATUS_PENDING)
+                        <span class="badge badge-warning">Pending</span>
+                    @elseif($status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                        <span class="badge badge-info">Recommended</span>
+                    @elseif($status === App\Models\LeaveRequest::STATUS_HR_APPROVED)
+                        <span class="badge badge-primary">HR Approved</span>
+                    @elseif($status === App\Models\LeaveRequest::STATUS_APPROVED)
+                        <span class="badge badge-success">Approved</span>
+                    @elseif($status === App\Models\LeaveRequest::STATUS_DISAPPROVED)
+                        <span class="badge badge-error">Denied</span>
+                    @else
+                        <span class="badge">—</span>
+                    @endif
                 </div>
 
                 <!-- Cancel Button (UI only) -->

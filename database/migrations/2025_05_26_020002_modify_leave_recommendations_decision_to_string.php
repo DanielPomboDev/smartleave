@@ -12,11 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('leave_recommendations', function (Blueprint $table) {
-            // First, drop the existing decision column
-            $table->dropColumn('decision');
-
-            // Then add it back as a string
-            $table->string('decision')->after('leave_request_id');
+            if (Schema::hasColumn('leave_recommendations', 'decision')) {
+                $table->dropColumn('decision');
+            }
+            if (!Schema::hasColumn('leave_recommendations', 'recommendation')) {
+                $table->enum('recommendation', ['approve', 'disapprove']);
+            }
+            if (Schema::hasColumn('leave_recommendations', 'reason')) {
+                $table->renameColumn('reason', 'remarks');
+            }
+            if (Schema::hasColumn('leave_recommendations', 'leave_request_id')) {
+                $table->renameColumn('leave_request_id', 'leave_id');
+            }
         });
     }
 

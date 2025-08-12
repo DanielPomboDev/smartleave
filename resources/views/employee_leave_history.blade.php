@@ -63,6 +63,8 @@
                     <select name="status" class="w-full select select-bordered border-gray-300 focus:border-blue-500" onchange="handleFilterChange(this)">
                         <option value="all" {{ ($filters['status'] ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
                         <option value="pending" {{ ($filters['status'] ?? 'all') === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="recommended" {{ ($filters['status'] ?? 'all') === 'recommended' ? 'selected' : '' }}>Recommended</option>
+                        <option value="hr_approved" {{ ($filters['status'] ?? 'all') === 'hr_approved' ? 'selected' : '' }}>HR Approved</option>
                         <option value="approved" {{ ($filters['status'] ?? 'all') === 'approved' ? 'selected' : '' }}>Approved</option>
                         <option value="disapproved" {{ ($filters['status'] ?? 'all') === 'disapproved' ? 'selected' : '' }}>Disapproved</option>
                     </select>
@@ -106,10 +108,16 @@
                                 <td>
                                     @if($leaveRequest->isPending())
                                         <span class="badge badge-warning">Pending</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                                        <span class="badge badge-info">Recommended</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_HR_APPROVED)
+                                        <span class="badge badge-primary">HR Approved</span>
                                     @elseif($leaveRequest->isApproved())
                                         <span class="badge badge-success">Approved</span>
                                     @elseif($leaveRequest->isDisapproved())
                                         <span class="badge badge-error">Denied</span>
+                                    @else
+                                        <span class="badge">—</span>
                                     @endif
                                 </td>
                                 <td>

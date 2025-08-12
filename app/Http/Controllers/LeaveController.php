@@ -69,6 +69,19 @@ class LeaveController extends Controller
             'commutation' => 'nullable|boolean',
         ]);
 
+        // Additional validation for vacation leave timing
+        if ($validated['leaveType'] === 'vacation') {
+            $startDate = Carbon::parse($validated['startDate']);
+            $today = Carbon::today();
+            $daysDifference = $today->diffInDays($startDate, false); // false to get signed difference
+
+            if ($daysDifference < 5) {
+                return redirect()->back()
+                    ->withErrors(['startDate' => 'Vacation leave must be applied at least 5 days before the start date.'])
+                    ->withInput();
+            }
+        }
+
         // Additional validation based on leave type
         if ($validated['leaveType'] === 'vacation') {
             $request->validate([
@@ -309,19 +322,21 @@ class LeaveController extends Controller
                 'approval_reason.string' => 'The approval reason must be text.',
             ]);
 
-            // Create leave recommendation
+            // Create leave recommendation (new schema)
             $recommendation = new \App\Models\LeaveRecommendation();
-            $recommendation->leave_request_id = $id;
-            $recommendation->decision = $validated['recommendation'];
-            $recommendation->reason = $validated['recommendation'] === 'approve'
+            $recommendation->leave_id = $id;
+            $recommendation->recommendation = $validated['recommendation'];
+            $recommendation->remarks = $validated['recommendation'] === 'approve'
                 ? ($validated['approval_reason'] ?? '')
                 : ($validated['disapproval_reason'] ?? '');
             $recommendation->department_admin_id = Auth::id();
             $recommendation->save();
 
-            // Update the leave request status only if disapproved
+            // Update the leave request status
             if ($validated['recommendation'] === 'disapprove') {
                 DB::statement("UPDATE leave_requests SET status = ? WHERE id = ?", ['disapproved', $id]);
+            } else {
+                DB::statement("UPDATE leave_requests SET status = ? WHERE id = ?", ['recommended', $id]);
             }
 
             // Send notification to HR
@@ -357,7 +372,7 @@ class LeaveController extends Controller
     public function showHRApproval($id)
     {
         // Get the leave request with user and department information
-        $leaveRequest = LeaveRequest::with(['user', 'user.department'])
+        $leaveRequest = LeaveRequest::with(['user', 'user.department', 'recommendations'])
             ->findOrFail($id);
 
         return view('hr_leave_approve', [
@@ -376,38 +391,43 @@ class LeaveController extends Controller
     public function processHRApproval(Request $request, $id)
     {
         try {
-            $leaveRequest = LeaveRequest::with('user')->findOrFail($id);
+            $leaveRequest = LeaveRequest::with(['user', 'recommendations'])->findOrFail($id);
 
-            // Check if the leave request is still pending or department approved
-            if (!in_array($leaveRequest->status, [LeaveRequest::STATUS_PENDING, LeaveRequest::STATUS_DEPARTMENT_APPROVED])) {
-                return redirect()->back()->with('error', 'This leave request has already been processed.');
+            // Must be recommended and have an approved recommendation
+            if ($leaveRequest->status !== LeaveRequest::STATUS_RECOMMENDED) {
+                return redirect()->back()->with('error', 'This leave request is not yet recommended by the department.');
+            }
+            if (!$leaveRequest->recommendations()->where('recommendation', 'approve')->exists()) {
+                return redirect()->back()->with('error', 'No department recommendation found.');
             }
 
             // Validate the request
             $validated = $request->validate([
-                'decision' => 'required|in:approve,disapprove',
-                'comments' => 'nullable|string|max:500',
+                'approval' => 'required|in:approve,disapprove',
+                'approved_for' => 'nullable|string|max:255',
+                'dissapproved_due_to' => 'nullable|string|max:500',
             ]);
 
-            // Update the leave request status
-            $leaveRequest->status = $validated['decision'] === 'approve'
-                ? LeaveRequest::STATUS_APPROVED
+            // Record HR approval in leave_approvals
+            \App\Models\LeaveApproval::create([
+                'hr_manager_id' => Auth::id(),
+                'leave_id' => $id,
+                'approval' => $validated['approval'],
+                'approved_for' => $validated['approved_for'] ?? null,
+                'dissapproved_due_to' => $validated['dissapproved_due_to'] ?? null,
+            ]);
+
+            // Update the leave request status only (comments and timestamps moved to leave_approvals table)
+            $leaveRequest->status = $validated['approval'] === 'approve'
+                ? LeaveRequest::STATUS_HR_APPROVED
                 : LeaveRequest::STATUS_DISAPPROVED;
-
-            // Save comments if provided
-            if (!empty($validated['comments'])) {
-                $leaveRequest->hr_comments = $validated['comments'];
-            }
-
-            $leaveRequest->hr_approved_by = Auth::id();
-            $leaveRequest->hr_approved_at = now();
             $leaveRequest->save();
 
             // Send notification to the employee
             $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
 
-            return redirect()->route('leave.requests')
-                ->with('success', 'Leave request has been ' . ($validated['decision'] === 'approve' ? 'approved' : 'disapproved') . ' by HR.');
+            return redirect()->route('hr.dashboard')
+                ->with('success', 'Leave request has been ' . ($validated['approval'] === 'approve' ? 'approved' : 'disapproved') . ' by HR.');
         } catch (\Exception $e) {
             Log::error('HR approval error', [
                 'leave_request_id' => $id,
@@ -452,6 +472,8 @@ class LeaveController extends Controller
         if ($status !== 'all') {
             $statusMap = [
                 'pending' => LeaveRequest::STATUS_PENDING,
+                'recommended' => LeaveRequest::STATUS_RECOMMENDED,
+                'hr_approved' => LeaveRequest::STATUS_HR_APPROVED,
                 'approved' => LeaveRequest::STATUS_APPROVED,
                 'rejected' => LeaveRequest::STATUS_DISAPPROVED
             ];
@@ -500,8 +522,9 @@ class LeaveController extends Controller
      */
     public function mayorDashboard()
     {
-        // Get recent leave requests from all users
+        // Get recent leave requests eligible for mayor (HR approved)
         $leaveRequests = LeaveRequest::with('user')
+            ->where('status', LeaveRequest::STATUS_HR_APPROVED)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -541,6 +564,7 @@ class LeaveController extends Controller
 
         // Start building the query (for all users)
         $query = LeaveRequest::with(['user', 'user.department'])
+            ->where('status', LeaveRequest::STATUS_HR_APPROVED)
             ->orderBy('created_at', 'desc');
 
         // Apply filters
@@ -586,5 +610,43 @@ class LeaveController extends Controller
                 'search' => $search
             ]
         ]);
+    }
+
+    /**
+     * Show the mayor approval view (HR-approved only)
+     */
+    public function showMayorApproval($id)
+    {
+        $leaveRequest = LeaveRequest::with(['user', 'user.department', 'recommendations'])
+            ->findOrFail($id);
+        if ($leaveRequest->status !== LeaveRequest::STATUS_HR_APPROVED) {
+            abort(403, 'This request is not HR-approved yet.');
+        }
+        return view('mayor_leave_approve', compact('leaveRequest'));
+    }
+
+    /**
+     * Process mayor final decision
+     */
+    public function processMayorApproval(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'decision' => 'required|in:approve,disapprove',
+            'comments' => 'nullable|string|max:500',
+        ]);
+
+        $leaveRequest = LeaveRequest::with('user')->findOrFail($id);
+        if ($leaveRequest->status !== LeaveRequest::STATUS_HR_APPROVED) {
+            return back()->with('error', 'Request not HR-approved yet.');
+        }
+
+        $leaveRequest->status = $validated['decision'] === 'approve'
+            ? LeaveRequest::STATUS_APPROVED
+            : LeaveRequest::STATUS_DISAPPROVED;
+        $leaveRequest->save();
+
+        $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+
+        return redirect()->route('mayor.leave.requests')->with('success', 'Final decision recorded.');
     }
 }

@@ -125,10 +125,16 @@ use App\Models\LeaveRequest;
                                 <td>
                                     @if($leaveRequest->isPending())
                                         <span class="badge badge-warning">Pending</span>
+                                    @elseif($leaveRequest->status === LeaveRequest::STATUS_RECOMMENDED)
+                                        <span class="badge badge-info">Recommended</span>
+                                    @elseif($leaveRequest->status === LeaveRequest::STATUS_HR_APPROVED)
+                                        <span class="badge badge-primary">HR Approved</span>
                                     @elseif($leaveRequest->isApproved())
                                         <span class="badge badge-success">Approved</span>
                                     @elseif($leaveRequest->isDisapproved())
                                         <span class="badge badge-error">Rejected</span>
+                                    @else
+                                        <span class="badge">—</span>
                                     @endif
                                 </td>
                                 <td>

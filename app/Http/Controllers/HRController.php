@@ -66,6 +66,31 @@ class HRController extends Controller
     }
 
     /**
+     * HR dashboard: show recommended leave requests and summary stats
+     */
+    public function dashboard()
+    {
+        // HR queue: show recommended and recently HR-approved
+        $hrQueue = LeaveRequest::with(['user.department'])
+            ->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED])
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        // Summary stats
+        $stats = [
+            'pending' => LeaveRequest::where('status', LeaveRequest::STATUS_PENDING)->count(),
+            'approved_this_month' => LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)
+                ->whereMonth('created_at', now()->month)->count(),
+            'rejected_this_month' => LeaveRequest::where('status', LeaveRequest::STATUS_DISAPPROVED)
+                ->whereMonth('created_at', now()->month)->count(),
+            'total_employees' => \App\Models\User::count(),
+        ];
+
+        return view('hr_dashboard', compact('hrQueue', 'stats'));
+    }
+
+    /**
      * Store a newly created employee.
      *
      * @param  \Illuminate\Http\Request  $request

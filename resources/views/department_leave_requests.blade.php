@@ -14,7 +14,7 @@ use App\Models\LeaveRequest;
             </h2>
             
             <!-- Filter Controls -->
-            <form method="GET" action="{{ route('department.leave.requests') }}" class="flex flex-wrap gap-4 mb-6">
+            <form method="GET" action="{{ route('department.leave.requests') }}" class="flex flex-wrap gap-4 mb-6" id="filterForm">
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium text-gray-700">Filter by Status</span>
@@ -22,6 +22,8 @@ use App\Models\LeaveRequest;
                     <select name="status" class="select select-bordered border-gray-300 focus:border-blue-500" onchange="this.form.submit()">
                         <option value="all" {{ $filters['status'] === 'all' ? 'selected' : '' }}>All Statuses</option>
                         <option value="pending" {{ $filters['status'] === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="recommended" {{ $filters['status'] === 'recommended' ? 'selected' : '' }}>Recommended</option>
+                        <option value="hr_approved" {{ $filters['status'] === 'hr_approved' ? 'selected' : '' }}>HR Approved</option>
                         <option value="approved" {{ $filters['status'] === 'approved' ? 'selected' : '' }}>Approved</option>
                         <option value="rejected" {{ $filters['status'] === 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
@@ -41,29 +43,95 @@ use App\Models\LeaveRequest;
                 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium text-gray-700">Date Range</span>
-                    </label>
-                    <div class="flex space-x-2">
-                        <input type="date" name="start_date" class="input input-bordered border-gray-300 focus:border-blue-500" value="{{ $filters['start_date'] }}" placeholder="From">
-                        <input type="date" name="end_date" class="input input-bordered border-gray-300 focus:border-blue-500" value="{{ $filters['end_date'] }}" placeholder="To">
-                    </div>
-                </div>
-                
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700">Search</span>
+                        <span class="label-text font-medium text-gray-700">Search Employee</span>
                     </label>
                     <div class="relative">
-                        <input type="text" name="search" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10" value="{{ $filters['search'] }}" placeholder="Search by name...">
-                        <button type="submit" class="absolute inset-y-0 right-0 px-3 flex items-center">
-                            <i class="fi-rr-search text-gray-400"></i>
+                        <input type="text" 
+                               name="search" 
+                               id="searchInput"
+                               class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-20" 
+                               value="{{ $filters['search'] }}" 
+                               placeholder="Type employee name..."
+                               autocomplete="off">
+                        
+                        <!-- Clear button (only show when there's text) -->
+                        @if(!empty($filters['search']))
+                            <button type="button" 
+                                    onclick="clearSearch()" 
+                                    class="absolute inset-y-0 right-12 px-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Clear search">
+                                <i class="fi-rr-cross text-sm"></i>
+                            </button>
+                        @endif
+                        
+                        <!-- Search button -->
+                        <button type="submit" id="searchButton" class="absolute inset-y-0 right-0 px-3 flex items-center bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition-colors">
+                            <i class="fi-rr-search" id="searchIcon"></i>
+                            <i class="fi-rr-loading animate-spin hidden" id="loadingIcon"></i>
                         </button>
+                    </div>
+                    <div class="label">
+                        <span class="label-text-alt text-gray-500">Search by first name or last name</span>
                     </div>
                 </div>
             </form>
             
+            <!-- Search Results Summary -->
+            @if(!empty($filters['search']) || $filters['status'] !== 'all' || $filters['leave_type'] !== 'all')
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <i class="fi-rr-filter text-blue-500"></i>
+                            <span class="text-sm font-medium text-blue-700">Active Filters:</span>
+                        </div>
+                        <a href="{{ route('department.leave.requests') }}" class="text-sm text-blue-600 hover:text-blue-800 underline">
+                            Clear All Filters
+                        </a>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @if(!empty($filters['search']))
+                            <span class="badge badge-primary badge-outline">
+                                Search: "{{ $filters['search'] }}"
+                            </span>
+                        @endif
+                        @if($filters['status'] !== 'all')
+                            <span class="badge badge-primary badge-outline">
+                                Status: {{ ucfirst($filters['status']) }}
+                            </span>
+                        @endif
+                        @if($filters['leave_type'] !== 'all')
+                            <span class="badge badge-primary badge-outline">
+                                Type: {{ LeaveRequest::LEAVE_TYPES[$filters['leave_type']] ?? $filters['leave_type'] }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @endif
+            
             <!-- Leave Requests Table -->
             <div class="overflow-x-auto">
+                <!-- Results Summary -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-sm text-gray-600">
+                        @if($leaveRequests->total() > 0)
+                            Showing {{ $leaveRequests->firstItem() ?? 0 }} to {{ $leaveRequests->lastItem() ?? 0 }} of {{ $leaveRequests->total() }} results
+                            @if(!empty($filters['search']))
+                                for "<strong>{{ $filters['search'] }}</strong>"
+                            @endif
+                        @else
+                            No results found
+                            @if(!empty($filters['search']))
+                                for "<strong>{{ $filters['search'] }}</strong>"
+                            @endif
+                        @endif
+                    </div>
+                    @if($leaveRequests->total() > 0)
+                        <div class="text-sm text-gray-500">
+                            Page {{ $leaveRequests->currentPage() }} of {{ $leaveRequests->lastPage() }}
+                        </div>
+                    @endif
+                </div>
+
                 <table class="table table-zebra w-full">
                     <thead>
                         <tr class="bg-gray-100">
@@ -78,7 +146,7 @@ use App\Models\LeaveRequest;
                     </thead>
                     <tbody>
                         @forelse($leaveRequests as $leaveRequest)
-                            <tr>
+                            <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="flex items-center space-x-3">
                                     <div class="avatar">
                                         <div class="mask mask-squircle w-8 h-8">
@@ -105,15 +173,21 @@ use App\Models\LeaveRequest;
                                 <td>
                                     @if($leaveRequest->isPending())
                                         <span class="badge badge-warning">Pending</span>
+                                    @elseif($leaveRequest->isRecommended())
+                                        <span class="badge badge-info">Recommended</span>
+                                    @elseif($leaveRequest->isHrApproved())
+                                        <span class="badge badge-primary">HR Approved</span>
                                     @elseif($leaveRequest->isApproved())
                                         <span class="badge badge-success">Approved</span>
                                     @elseif($leaveRequest->isDisapproved())
                                         <span class="badge badge-error">Rejected</span>
+                                    @else
+                                        <span class="badge badge-ghost">{{ ucfirst($leaveRequest->status) }}</span>
                                     @endif
                                 </td>
                                 <td>
                                     <div class="flex space-x-2">
-                                        <a href="{{ route('department.leave.approve.start', $leaveRequest->id) }}" class="btn btn-xs btn-primary">
+                                        <a href="{{ route('department.leave.approve.start', $leaveRequest->id) }}" class="btn btn-xs btn-primary hover:btn-primary-focus transition-colors">
                                             View
                                         </a>
                                     </div>
@@ -121,8 +195,25 @@ use App\Models\LeaveRequest;
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-gray-500">
-                                    No leave requests found
+                                <td colspan="7" class="text-center py-12">
+                                    <div class="flex flex-col items-center space-y-3">
+                                        <i class="fi-rr-search text-4xl text-gray-300"></i>
+                                        <div class="text-gray-500">
+                                            @if(!empty($filters['search']))
+                                                No leave requests found for "<strong>{{ $filters['search'] }}</strong>"
+                                            @else
+                                                No leave requests found
+                                            @endif
+                                        </div>
+                                        <div class="text-sm text-gray-400">
+                                            Try adjusting your search criteria or filters
+                                        </div>
+                                        @if(!empty($filters['search']) || $filters['status'] !== 'all' || $filters['leave_type'] !== 'all')
+                                            <a href="{{ route('department.leave.requests') }}" class="btn btn-sm btn-outline">
+                                                Clear All Filters
+                                            </a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -131,29 +222,35 @@ use App\Models\LeaveRequest;
             </div>
             
             <!-- Pagination -->
-            <div class="flex justify-end mt-6">
-                <div class="btn-group">
-                    @if($leaveRequests->onFirstPage())
-                        <button class="btn btn-sm" disabled>«</button>
-                    @else
-                        <a href="{{ $leaveRequests->previousPageUrl() }}" class="btn btn-sm">«</a>
-                    @endif
-
-                    @for($i = 1; $i <= $leaveRequests->lastPage(); $i++)
-                        @if($i == $leaveRequests->currentPage())
-                            <button class="btn btn-sm btn-active">{{ $i }}</button>
+            @if($leaveRequests->hasPages())
+                <div class="flex justify-between items-center mt-6">
+                    <div class="text-sm text-gray-600">
+                        Showing {{ $leaveRequests->firstItem() ?? 0 }} to {{ $leaveRequests->lastItem() ?? 0 }} of {{ $leaveRequests->total() }} results
+                    </div>
+                    
+                    <div class="btn-group">
+                        @if($leaveRequests->onFirstPage())
+                            <button class="btn btn-sm" disabled>«</button>
                         @else
-                            <a href="{{ $leaveRequests->url($i) }}" class="btn btn-sm">{{ $i }}</a>
+                            <a href="{{ $leaveRequests->previousPageUrl() }}" class="btn btn-sm">«</a>
                         @endif
-                    @endfor
 
-                    @if($leaveRequests->hasMorePages())
-                        <a href="{{ $leaveRequests->nextPageUrl() }}" class="btn btn-sm">»</a>
-                    @else
-                        <button class="btn btn-sm" disabled>»</button>
-                    @endif
+                        @foreach($leaveRequests->getUrlRange(1, $leaveRequests->lastPage()) as $page => $url)
+                            @if($page == $leaveRequests->currentPage())
+                                <button class="btn btn-sm btn-active">{{ $page }}</button>
+                            @else
+                                <a href="{{ $url }}" class="btn btn-sm">{{ $page }}</a>
+                            @endif
+                        @endforeach
+
+                        @if($leaveRequests->hasMorePages())
+                            <a href="{{ $leaveRequests->nextPageUrl() }}" class="btn btn-sm">»</a>
+                        @else
+                            <button class="btn btn-sm" disabled>»</button>
+                        @endif
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
     </div>
     
@@ -251,6 +348,50 @@ use App\Models\LeaveRequest;
     </div>
     
     <script>
+        // Add CSS for smooth animations
+        const style = document.createElement('style');
+        style.textContent = `
+            .search-input-focus {
+                transform: scale(1.02);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            
+            .filter-badge {
+                transition: all 0.2s ease-in-out;
+                cursor: pointer;
+            }
+            
+            .filter-badge:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            
+            .search-results-enter {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            
+            .search-results-enter-active {
+                opacity: 1;
+                transform: translateY(0);
+                transition: all 0.3s ease-out;
+            }
+            
+            .table-row-hover {
+                transition: background-color 0.2s ease-in-out;
+            }
+            
+            .loading-pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+
         // Open leave details modal
         function openLeaveModal(name, leaveType) {
             document.getElementById('employeeName').textContent = name;
@@ -263,6 +404,135 @@ use App\Models\LeaveRequest;
         function closeLeaveModal() {
             document.getElementById('leaveDetailsModal').classList.remove('modal-open');
         }
+
+        // Function to clear search input
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterForm').submit(); // Submit the form to apply new filters
+        }
+
+        // Function to reset all filters
+        function resetFilters() {
+            document.getElementById('filterForm').reset();
+            document.getElementById('filterForm').submit();
+        }
+
+        // Real-time search functionality with debouncing
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const searchIcon = document.getElementById('searchIcon');
+        const loadingIcon = document.getElementById('loadingIcon');
+        
+        if (searchInput) {
+            // Add focus effects
+            searchInput.addEventListener('focus', function() {
+                this.parentElement.classList.add('search-input-focus');
+            });
+            
+            searchInput.addEventListener('blur', function() {
+                this.parentElement.classList.remove('search-input-focus');
+            });
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                
+                // Show loading indicator
+                searchButton.disabled = true;
+                searchIcon.classList.add('hidden');
+                loadingIcon.classList.remove('hidden');
+                
+                // Debounce the search to avoid too many requests
+                searchTimeout = setTimeout(() => {
+                    // Submit the form after user stops typing for 500ms
+                    document.getElementById('filterForm').submit();
+                }, 500);
+            });
+
+            // Handle Enter key press
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    document.getElementById('filterForm').submit();
+                }
+            });
+
+            // Focus search input on page load if there's a search term
+            if (searchInput.value) {
+                searchInput.focus();
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }
+        }
+
+        // Add visual feedback for active filters
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeFilters = document.querySelectorAll('.badge');
+            activeFilters.forEach(badge => {
+                badge.classList.add('filter-badge');
+                badge.addEventListener('click', function() {
+                    // Add a subtle animation when clicking on filter badges
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+
+            // Add hover effects to table rows
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                row.classList.add('table-row-hover');
+            });
+
+            // Show success message if there are results
+            @if($leaveRequests->total() > 0 && !empty($filters['search']))
+                showNotification('Search completed successfully!', 'success');
+            @endif
+        });
+
+        // Function to show notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} fixed top-4 right-4 z-50 max-w-sm shadow-lg search-results-enter`;
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fi-rr-${type === 'success' ? 'check' : type === 'error' ? 'cross' : 'info'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Trigger animation
+            setTimeout(() => {
+                notification.classList.add('search-results-enter-active');
+            }, 10);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('search-results-enter-active');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Add loading state to form submission
+        document.getElementById('filterForm').addEventListener('submit', function() {
+            const submitButtons = this.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fi-rr-loading animate-spin mr-1"></i>Loading...';
+                
+                // Re-enable after a delay (in case of errors)
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }, 5000);
+            });
+        });
     </script>
 </x-layouts.layout>
 

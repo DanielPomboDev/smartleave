@@ -1,69 +1,4 @@
-@php
-// Sample static data for UI demonstration
-$stats = [
-    'pending' => 3,
-    'approved_this_month' => 7,
-    'rejected_this_month' => 2,
-    'total_employees' => 25
-];
-
-$leaveRequests = [
-    (object) [
-        'user' => (object) [
-            'first_name' => 'Juan',
-            'last_name' => 'Dela Cruz',
-            'position' => 'IT Specialist'
-        ],
-        'leave_type' => 'vacation',
-        'start_date' => now(),
-        'end_date' => now()->addDays(2),
-        'number_of_days' => 3,
-        'status' => 'pending',
-        'isPending' => fn() => true,
-        'isApproved' => fn() => false,
-        'isDisapproved' => fn() => false,
-        'id' => 1
-    ],
-    (object) [
-        'user' => (object) [
-            'first_name' => 'Maria',
-            'last_name' => 'Santos',
-            'position' => 'HR Officer'
-        ],
-        'leave_type' => 'sick',
-        'start_date' => now()->subDays(10),
-        'end_date' => now()->subDays(8),
-        'number_of_days' => 3,
-        'status' => 'approved',
-        'isPending' => fn() => false,
-        'isApproved' => fn() => true,
-        'isDisapproved' => fn() => false,
-        'id' => 2
-    ],
-    (object) [
-        'user' => (object) [
-            'first_name' => 'Pedro',
-            'last_name' => 'Reyes',
-            'position' => 'Finance Clerk'
-        ],
-        'leave_type' => 'emergency',
-        'start_date' => now()->subDays(5),
-        'end_date' => now()->subDays(3),
-        'number_of_days' => 3,
-        'status' => 'rejected',
-        'isPending' => fn() => false,
-        'isApproved' => fn() => false,
-        'isDisapproved' => fn() => true,
-        'id' => 3
-    ]
-];
-
-$leaveTypes = [
-    'vacation' => 'Vacation Leave',
-    'sick' => 'Sick Leave',
-    'emergency' => 'Emergency Leave'
-];
-@endphp
+@php /** now uses real data provided by controller */ @endphp
 
 <x-layouts.layout>
     <x-slot:title>Mayor Dashboard</x-slot:title>
@@ -160,7 +95,7 @@ $leaveTypes = [
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($leaveRequests as $leaveRequest)
+                        @forelse($leaveRequests as $leaveRequest)
                             <tr>
                                 <td class="flex items-center space-x-3">
                                     <div class="avatar">
@@ -175,7 +110,7 @@ $leaveTypes = [
                                         <div class="text-xs text-gray-500">{{ $leaveRequest->user->position }}</div>
                                     </div>
                                 </td>
-                                <td>{{ $leaveTypes[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</td>
+                                <td>{{ App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</td>
                                 <td>
                                     @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
                                         {{ $leaveRequest->start_date->format('M d, Y') }}
@@ -185,12 +120,14 @@ $leaveTypes = [
                                 </td>
                                 <td>{{ $leaveRequest->number_of_days }}</td>
                                 <td>
-                                    @if($leaveRequest->status === 'pending')
-                                        <span class="badge badge-warning">Pending</span>
-                                    @elseif($leaveRequest->status === 'approved')
+                                    @if($leaveRequest->status === App\Models\LeaveRequest::STATUS_HR_APPROVED)
+                                        <span class="badge badge-primary">HR Approved</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_APPROVED)
                                         <span class="badge badge-success">Approved</span>
-                                    @elseif($leaveRequest->status === 'rejected')
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_DISAPPROVED)
                                         <span class="badge badge-error">Rejected</span>
+                                    @else
+                                        <span class="badge">—</span>
                                     @endif
                                 </td>
                                 <td>
@@ -201,7 +138,11 @@ $leaveTypes = [
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-500">No HR-approved requests</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

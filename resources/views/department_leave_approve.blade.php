@@ -31,6 +31,17 @@ use App\Models\LeaveRequest;
                 Department Leave Recommendation Process
             </h2>
 
+            @if($leaveRequest->status !== LeaveRequest::STATUS_PENDING)
+                <div class="alert alert-info mb-6">
+                    <div class="flex items-center">
+                        <i class="fi-rr-info text-xl mr-2"></i>
+                        <span>
+                            This request is already {{ $leaveRequest->status === LeaveRequest::STATUS_RECOMMENDED ? 'recommended' : ($leaveRequest->isHrApproved() ? 'HR approved' : ($leaveRequest->isApproved() ? 'approved' : ($leaveRequest->isDisapproved() ? 'disapproved' : 'processed'))) }}. You can view details but cannot submit another recommendation.
+                        </span>
+                    </div>
+                </div>
+            @endif
+
             <!-- Step Indicator -->
             <div class="w-full py-4">
                 <ul class="steps steps-horizontal w-full">
@@ -104,10 +115,17 @@ use App\Models\LeaveRequest;
                     </div>
 
                     <div class="flex justify-end mt-6">
-                        <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(1)">
-                            Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
-                        </button>
+                        @if($leaveRequest->status === LeaveRequest::STATUS_PENDING)
+                            <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(1)">
+                                Next
+                                <i class="fi-rr-arrow-right ml-2"></i>
+                            </button>
+                        @else
+                            <button type="button" class="btn" disabled>
+                                Next
+                                <i class="fi-rr-lock ml-2"></i>
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -163,11 +181,18 @@ use App\Models\LeaveRequest;
                             <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
-                        <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
-                            onclick="validateStep2AndProceed()">
-                            Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
-                        </button>
+                        @if($leaveRequest->status === LeaveRequest::STATUS_PENDING)
+                            <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
+                                onclick="validateStep2AndProceed()">
+                                Next
+                                <i class="fi-rr-arrow-right ml-2"></i>
+                            </button>
+                        @else
+                            <button type="button" class="btn" disabled>
+                                Next
+                                <i class="fi-rr-lock ml-2"></i>
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -201,10 +226,17 @@ use App\Models\LeaveRequest;
                             <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
-                        <button type="submit" class="btn bg-green-500 hover:bg-green-600 text-white">
-                            <i class="fi-rr-check mr-2"></i>
-                            Submit Recommendation
-                        </button>
+                        @if($leaveRequest->status === LeaveRequest::STATUS_PENDING)
+                            <button type="submit" class="btn bg-green-500 hover:bg-green-600 text-white">
+                                <i class="fi-rr-check mr-2"></i>
+                                Submit Recommendation
+                            </button>
+                        @else
+                            <button type="button" class="btn" disabled>
+                                <i class="fi-rr-lock mr-2"></i>
+                                Submit Recommendation
+                            </button>
+                        @endif
                     </div>
                 </div>
             </form>

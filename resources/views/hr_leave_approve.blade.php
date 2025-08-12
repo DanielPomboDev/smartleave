@@ -30,12 +30,14 @@
                         <div class="flex items-center mb-6 pb-4 border-b border-gray-200">
                             <div class="avatar mr-4">
                                 <div class="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                                    <span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">DP</span>
+                                    <span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">
+                                        {{ strtoupper(substr($leaveRequest->user->first_name, 0, 1) . substr($leaveRequest->user->last_name, 0, 1)) }}
+                                    </span>
                                 </div>
                             </div>
                             <div>
-                                <h4 class="text-xl font-bold text-gray-800">Daniel Pombo</h4>
-                                <p class="text-gray-600">IT Department • IT Specialist</p>
+                                <h4 class="text-xl font-bold text-gray-800">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</h4>
+                                <p class="text-gray-600">{{ $leaveRequest->user->department->name ?? '' }} • {{ $leaveRequest->user->position }}</p>
                             </div>
                         </div>
 
@@ -43,19 +45,28 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Type of Leave</h5>
-                                <p class="font-medium text-gray-800 text-lg">Vacation Leave</p>
+                                <p class="font-medium text-gray-800 text-lg">{{ App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? ucfirst($leaveRequest->leave_type) }}</p>
+                                @if($leaveRequest->subtype)
+                                    <p class="text-gray-600 mt-1">{{ $leaveRequest->subtype }}</p>
+                                @endif
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Applied On</h5>
-                                <p class="font-medium text-gray-800 text-lg">May 15, 2023</p>
+                                <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->created_at->format('M d, Y') }}</p>
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Inclusive Dates</h5>
-                                <p class="font-medium text-gray-800 text-lg">Jun 1-5, 2023</p>
+                                <p class="font-medium text-gray-800 text-lg">
+                                    @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                        {{ $leaveRequest->start_date->format('M d, Y') }}
+                                    @else
+                                        {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                    @endif
+                                </p>
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Number of Working Days</h5>
-                                <p class="font-medium text-gray-800 text-lg">5 days</p>
+                                <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->number_of_days }} days</p>
                             </div>
                         </div>
 
@@ -63,38 +74,48 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Where Leave Will Be Spent</h5>
-                                <p class="font-medium text-gray-800">Within the Philippines</p>
+                                <p class="font-medium text-gray-800">{{ $leaveRequest->where_spent }}</p>
                             </div>
                             <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                 <h5 class="font-semibold text-blue-600 mb-3">Commutation</h5>
-                                <p class="font-medium text-gray-800">Requested</p>
+                                <p class="font-medium text-gray-800">{{ $leaveRequest->commutation ? 'Requested' : 'Not Requested' }}</p>
                             </div>
                         </div>
 
                         <!-- Recommendation Section -->
+                        @php($deptRec = optional($leaveRequest->recommendations->sortByDesc('created_at')->first()))
+                        @if($deptRec)
                         <div class="p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
-                            <h4 class="font-semibold text-blue-600 mb-3">Recommendation</h4>
+                            <h4 class="font-semibold text-blue-600 mb-3">Department Recommendation</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Authorized Personnel</label>
-                                    <p class="font-medium text-gray-800">John Smith</p>
+                                    <p class="font-medium text-gray-800">{{ $deptRec->departmentAdmin->first_name ?? '' }} {{ $deptRec->departmentAdmin->last_name ?? '' }}</p>
                                     <p class="text-sm text-gray-500">Department Head</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Approval Type</label>
-                                    <p class="font-medium text-gray-800">Approve</p>
-                                    <p class="text-sm text-gray-500 mt-1">Leave request is valid and within policy guidelines.</p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Decision</label>
+                                    <p class="font-medium text-gray-800 text-capitalize">{{ $deptRec->recommendation }}</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ $deptRec->remarks }}</p>
                                 </div>
                             </div>
                         </div>
+                        @endif
                     </div>
 
                     <div class="flex justify-end mt-6">
-                        <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
-                            onclick="nextStep(1)">
-                            Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
-                        </button>
+                        @if($leaveRequest->status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                            <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
+                                onclick="nextStep(1)">
+                                Next
+                                <i class="fi-rr-arrow-right ml-2"></i>
+                            </button>
+                        @else
+                            <button type="button" class="btn" disabled>
+                                Next
+                                <i class="fi-rr-lock ml-2"></i>
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -111,12 +132,12 @@
                             </label>
                             <div class="flex flex-col space-y-3">
                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="radio" name="primary_decision" value="approve"
+                                    <input type="radio" name="approval" value="approve"
                                         class="radio radio-success" checked onchange="toggleDecisionOptions()">
                                     <span>Approve</span>
                                 </label>
                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="radio" name="primary_decision" value="disapprove"
+                                    <input type="radio" name="approval" value="disapprove"
                                         class="radio radio-error" onchange="toggleDecisionOptions()">
                                     <span>Disapprove</span>
                                 </label>
@@ -131,22 +152,22 @@
                                 </label>
                                 <div class="flex flex-col space-y-3">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="radio" name="approval_type" value="with_pay"
+                                         <input type="radio" name="approved_for" value="with_pay"
                                             class="radio radio-sm radio-success" checked>
                                         <span>Approved for ___ days with pay</span>
                                     </label>
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="radio" name="approval_type" value="without_pay"
+                                         <input type="radio" name="approved_for" value="without_pay"
                                             class="radio radio-sm radio-warning">
                                         <span>Approved for ___ days without pay</span>
                                     </label>
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="radio" name="approval_type" value="other"
+                                         <input type="radio" name="approved_for" value="other"
                                             class="radio radio-sm radio-info" onchange="toggleOtherApprovalInput()">
                                         <span>Others (specify):</span>
                                     </label>
                                     <div class="ml-6">
-                                        <input type="text" name="other_approval_details"
+                                         <input type="text" name="approved_for_other"
                                             class="input input-bordered w-full"
                                             placeholder="Specify other approval details" disabled
                                             id="otherApprovalInput">
@@ -161,7 +182,7 @@
                                 <label class="label">
                                     <span class="label-text font-medium">Reason for disapproval:</span>
                                 </label>
-                                <textarea name="disapproval_reason" class="textarea textarea-bordered h-24"
+                                 <textarea name="dissapproved_due_to" class="textarea textarea-bordered h-24"
                                     placeholder="Enter reason for disapproval..."></textarea>
                             </div>
                         </div>
@@ -174,11 +195,18 @@
                             <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
-                        <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
-                            onclick="nextStep(2)">
-                            Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
-                        </button>
+                        @if($leaveRequest->status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                            <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
+                                onclick="nextStep(2)">
+                                Next
+                                <i class="fi-rr-arrow-right ml-2"></i>
+                            </button>
+                        @else
+                            <button type="button" class="btn" disabled>
+                                Next
+                                <i class="fi-rr-lock ml-2"></i>
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -195,74 +223,84 @@
                                 <div class="flex items-center mb-6 pb-4 border-b border-gray-200">
                                     <div class="avatar mr-4">
                                         <div class="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                                            <span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">DP</span>
+                                            <span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">
+                                                {{ strtoupper(substr($leaveRequest->user->first_name, 0, 1) . substr($leaveRequest->user->last_name, 0, 1)) }}
+                                            </span>
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 class="text-xl font-bold text-gray-800">Daniel Pombo</h4>
-                                        <p class="text-gray-600">IT Department • IT Specialist</p>
+                                        <h4 class="text-xl font-bold text-gray-800">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</h4>
+                                        <p class="text-gray-600">{{ $leaveRequest->user->department->name ?? '' }} • {{ $leaveRequest->user->position }}</p>
                                     </div>
                                 </div>
                                 <!-- Request Details -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                         <h5 class="font-semibold text-blue-600 mb-3">Type of Leave</h5>
-                                        <p class="font-medium text-gray-800 text-lg">Vacation Leave</p>
+                                        <p class="font-medium text-gray-800 text-lg">{{ App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? ucfirst($leaveRequest->leave_type) }}</p>
                                     </div>
                                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                         <h5 class="font-semibold text-blue-600 mb-3">Applied On</h5>
-                                        <p class="font-medium text-gray-800 text-lg">May 15, 2023</p>
+                                        <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->created_at->format('M d, Y') }}</p>
                                     </div>
                                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                         <h5 class="font-semibold text-blue-600 mb-3">Inclusive Dates</h5>
-                                        <p class="font-medium text-gray-800 text-lg">Jun 1-5, 2023</p>
+                                        <p class="font-medium text-gray-800 text-lg">
+                                            @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                                {{ $leaveRequest->start_date->format('M d, Y') }}
+                                            @else
+                                                {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                            @endif
+                                        </p>
                                     </div>
                                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                         <h5 class="font-semibold text-blue-600 mb-3">Number of Working Days</h5>
-                                        <p class="font-medium text-gray-800 text-lg">5 days</p>
+                                        <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->number_of_days }} days</p>
                                     </div>
                                 </div>
                                 <!-- Additional Details -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                         <h5 class="font-semibold text-blue-600 mb-3">Where Leave Will Be Spent</h5>
-                                        <p class="font-medium text-gray-800">Within the Philippines</p>
+                                        <p class="font-medium text-gray-800">{{ $leaveRequest->where_spent }}</p>
                                     </div>
                                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                                         <h5 class="font-semibold text-blue-600 mb-3">Commutation</h5>
-                                        <p class="font-medium text-gray-800">Requested</p>
+                                        <p class="font-medium text-gray-800">{{ $leaveRequest->commutation ? 'Requested' : 'Not Requested' }}</p>
                                     </div>
                                 </div>
                             </div>
                             <!-- Recommendation Section -->
+                            @if($deptRec)
                             <div class="p-4 bg-white rounded-lg border border-blue-200 shadow-sm mb-6">
                                 <h4 class="font-semibold text-blue-600 mb-3">Department Admin Recommendation</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Authorized Personnel</label>
-                                        <p class="font-medium text-gray-800">John Smith</p>
+                                        <p class="font-medium text-gray-800">{{ $deptRec->departmentAdmin->first_name ?? '' }} {{ $deptRec->departmentAdmin->last_name ?? '' }}</p>
                                         <p class="text-sm text-gray-500">Department Head</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Decision</label>
-                                        <p class="font-medium text-gray-800 text-capitalize">Approve</p>
-                                        <p class="text-sm text-gray-500 mt-1">Leave request is valid and within policy guidelines.</p>
+                                        <p class="font-medium text-gray-800 text-capitalize">{{ $deptRec->recommendation }}</p>
+                                        <p class="text-sm text-gray-500 mt-1">{{ $deptRec->remarks }}</p>
                                     </div>
                                 </div>
                             </div>
+                            @endif
                             <!-- Approval Section -->
                             <div class="p-4 bg-white rounded-lg border border-green-200 shadow-sm mb-6">
                                 <h4 class="font-semibold text-green-600 mb-3">HR Manager Approval</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">HR Personnel</label>
-                                        <p class="font-medium text-gray-800">Maria Santos</p>
-                                        <p class="text-sm text-gray-500">HR Manager</p>
+                                        <p class="font-medium text-gray-800" id="hrPersonnelName">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</p>
+                                        <p class="text-sm text-gray-500" id="hrPersonnelPosition">{{ Auth::user()->position ?? 'HR Manager' }}</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Decision</label>
-                                        <p class="font-medium text-gray-800 text-capitalize">Approve</p>
-                                        <p class="text-sm text-gray-500 mt-1">Approved for 5 days with pay.</p>
+                                        <p class="font-medium text-gray-800 text-capitalize" id="hrDecisionText">&mdash;</p>
+                                        <p class="text-sm text-gray-500 mt-1" id="hrDecisionDetails">&nbsp;</p>
                                     </div>
                                 </div>
                             </div>
@@ -292,8 +330,8 @@
             // Update step indicator
             document.getElementById('step' + (currentStep + 1) + 'Indicator').classList.add('step-primary');
 
-            // If moving to Step 4, update the printable form with the selected options
             if (currentStep === 2) {
+                updateHRReviewSummary();
                 updatePrintableForm();
             }
         }
@@ -310,7 +348,7 @@
         }
 
         function toggleDecisionOptions() {
-            const primaryDecision = document.querySelector('input[name="primary_decision"]:checked').value;
+            const primaryDecision = document.querySelector('input[name="approval"]:checked').value;
             const approvalOptions = document.getElementById('approvalOptionsContainer');
             const disapprovalReason = document.getElementById('disapprovalReasonContainer');
 
@@ -338,13 +376,38 @@
             document.getElementById('inclusiveDatesDisplay').textContent = 'Jun 1-5, 2023';
 
             // Set recommendation based on decision
-            const primaryDecision = document.querySelector('input[name="primary_decision"]:checked').value;
+            const primaryDecision = document.querySelector('input[name="approval"]:checked').value;
             if (primaryDecision === 'approve') {
                 document.getElementById('approvalRecommendationCheckbox').innerHTML = '✓';
                 document.getElementById('disapprovalRecommendationCheckbox').innerHTML = '';
             } else {
                 document.getElementById('approvalRecommendationCheckbox').innerHTML = '';
                 document.getElementById('disapprovalRecommendationCheckbox').innerHTML = '✓';
+            }
+        }
+
+        function updateHRReviewSummary() {
+            const approval = document.querySelector('input[name="approval"]:checked').value;
+            const approvedFor = document.querySelector('input[name="approved_for"]:checked');
+            const otherDetails = document.querySelector('input[name="approved_for_other"]').value;
+            const disReason = document.querySelector('textarea[name="dissapproved_due_to"]').value;
+
+            const decisionText = document.getElementById('hrDecisionText');
+            const decisionDetails = document.getElementById('hrDecisionDetails');
+
+            decisionText.textContent = approval;
+            if (approval === 'approve') {
+                if (approvedFor) {
+                    if (approvedFor.value === 'with_pay') {
+                        decisionDetails.textContent = 'Approved for days with pay';
+                    } else if (approvedFor.value === 'without_pay') {
+                        decisionDetails.textContent = 'Approved for days without pay';
+                    } else if (approvedFor.value === 'other') {
+                        decisionDetails.textContent = otherDetails || 'Approved (details not specified)';
+                    }
+                }
+            } else {
+                decisionDetails.textContent = disReason || '—';
             }
         }
 
@@ -459,7 +522,7 @@
             toggleDecisionOptions();
             
             // Add event listeners for approval type radios
-            const approvalTypeRadios = document.querySelectorAll('input[name="approval_type"]');
+            const approvalTypeRadios = document.querySelectorAll('input[name="approved_for"]');
             approvalTypeRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
                     const otherInput = document.getElementById('otherApprovalInput');
