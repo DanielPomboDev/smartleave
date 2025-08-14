@@ -40,7 +40,7 @@
                     // Determine navigation config based on user type
                     $navConfig = match($userType) {
                         'hr' => 'navigation.hr_manager',
-                        'department', 'admin' => 'navigation.department_admin',
+                        'department_admin' => 'navigation.department_admin',
                         'mayor' => 'navigation.mayor',
                         default => 'navigation.employee'
                     };

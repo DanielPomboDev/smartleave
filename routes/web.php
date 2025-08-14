@@ -32,10 +32,6 @@ Route::middleware(['auth'])->group(function () {
         return view('hr_dashboard');
     })->name('hr.dashboard');
 
-    Route::get('/leave-requests', function () {
-        return view('hr_leave_requests');
-    })->name('leave.requests');
-
     Route::get('/leave-approve/{id}', [LeaveController::class, 'showHRApproval'])->name('leave.approve.start');
     Route::post('/leave-approve/{id}/process', [LeaveController::class, 'processHRApproval'])->name('leave.approve.process');
 
@@ -135,12 +131,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         return view('hr_settings');
     })->name('settings');
 
-    Route::get('/leave-requests', function () {
-        if (Auth::user()->user_type !== 'hr') {
-            return redirect('/employee-dashboard');
-        }
-        return view('hr_leave_requests');
-    })->name('leave.requests');
+    Route::get('/leave-requests', [HRController::class, 'leaveRequests'])->name('leave.requests');
 
     Route::get('/leave-credits', function () {
         if (Auth::user()->user_type !== 'hr') {

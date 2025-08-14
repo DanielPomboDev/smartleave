@@ -522,9 +522,9 @@ class LeaveController extends Controller
      */
     public function mayorDashboard()
     {
-        // Get recent leave requests eligible for mayor (HR approved)
+        // Get recent leave requests eligible for mayor (HR approved) and already approved by mayor
         $leaveRequests = LeaveRequest::with('user')
-            ->where('status', LeaveRequest::STATUS_HR_APPROVED)
+            ->whereIn('status', [LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -564,13 +564,14 @@ class LeaveController extends Controller
 
         // Start building the query (for all users)
         $query = LeaveRequest::with(['user', 'user.department'])
-            ->where('status', LeaveRequest::STATUS_HR_APPROVED)
+            ->whereIn('status', [LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED])
             ->orderBy('created_at', 'desc');
 
         // Apply filters
         if ($status !== 'all') {
             $statusMap = [
                 'pending' => LeaveRequest::STATUS_PENDING,
+                'hr_approved' => LeaveRequest::STATUS_HR_APPROVED,
                 'approved' => LeaveRequest::STATUS_APPROVED,
                 'rejected' => LeaveRequest::STATUS_DISAPPROVED
             ];
@@ -617,11 +618,15 @@ class LeaveController extends Controller
      */
     public function showMayorApproval($id)
     {
-        $leaveRequest = LeaveRequest::with(['user', 'user.department', 'recommendations'])
+        $leaveRequest = LeaveRequest::with(['user', 'user.department', 'recommendations', 'approvals'])
             ->findOrFail($id);
-        if ($leaveRequest->status !== LeaveRequest::STATUS_HR_APPROVED) {
-            abort(403, 'This request is not HR-approved yet.');
+            
+        // Allow viewing HR-approved requests and already mayor-approved requests
+        if ($leaveRequest->status !== LeaveRequest::STATUS_HR_APPROVED && 
+            $leaveRequest->status !== LeaveRequest::STATUS_APPROVED) {
+            abort(403, 'This request is not eligible for mayor approval.');
         }
+        
         return view('mayor_leave_approve', compact('leaveRequest'));
     }
 

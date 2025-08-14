@@ -140,7 +140,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-gray-500">No HR-approved requests</td>
+                                <td colspan="6" class="text-center py-4 text-gray-500">No leave requests awaiting mayor approval</td>
                             </tr>
                         @endforelse
                     </tbody>

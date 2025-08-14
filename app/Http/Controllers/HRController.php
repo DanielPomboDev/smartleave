@@ -108,7 +108,7 @@ class HRController extends Controller
             'position' => 'required|string|max:255',
             'start_date' => 'required|date',
             'salary' => 'required|numeric|min:0',
-            'user_type' => 'required|in:employee,hr,admin',
+            'user_type' => 'required|in:employee,hr,department_admin',
         ]);
 
         // Create the user
@@ -178,7 +178,7 @@ class HRController extends Controller
             'position' => 'required|string|max:255',
             'start_date' => 'required|date',
             'salary' => 'required|numeric|min:0',
-            'user_type' => 'required|in:employee,hr,admin',
+            'user_type' => 'required|in:employee,hr,department_admin',
         ]);
 
         // Find and update the user
@@ -284,6 +284,90 @@ class HRController extends Controller
         return view('hr_leave_record', [
             'employee' => $employee,
             'leaveRecords' => $leaveRecords
+        ]);
+    }
+
+    /**
+     * Display a list of leave requests with filtering and search.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function leaveRequests(Request $request)
+    {
+        // Get filter parameters
+        $status = $request->input('status', 'all');
+        $department = $request->input('department', 'all');
+        $dateRange = $request->input('date_range', 'all');
+        $search = $request->input('search', '');
+
+        // Start building the query
+        $query = LeaveRequest::with(['user.department'])
+            ->orderBy('created_at', 'desc');
+
+        // Apply status filter - by default show recommended and HR approved like dashboard
+        if ($status === 'all') {
+            $query->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED]);
+        } else if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        // Apply department filter
+        if ($department !== 'all') {
+            $query->whereHas('user', function ($q) use ($department) {
+                $q->where('department_id', $department);
+            });
+        }
+
+        // Apply date range filter
+        if ($dateRange !== 'all') {
+            $now = now();
+            switch ($dateRange) {
+                case 'today':
+                    $query->whereDate('created_at', $now->toDateString());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
+                    break;
+                case 'month':
+                    $query->whereMonth('created_at', $now->month)
+                        ->whereYear('created_at', $now->year);
+                    break;
+            }
+        }
+
+        // Apply search
+        if (!empty($search)) {
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('user_id', 'like', "%{$search}%");
+            });
+        }
+
+        // Get paginated results
+        $leaveRequests = $query->paginate(10)->withQueryString();
+
+        // Get all departments for the filter dropdown
+        $departments = Department::all();
+
+        // Summary stats
+        $stats = [
+            'pending' => LeaveRequest::where('status', LeaveRequest::STATUS_PENDING)->count(),
+            'approved' => LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)->count(),
+            'disapproved' => LeaveRequest::where('status', LeaveRequest::STATUS_DISAPPROVED)->count(),
+        ];
+
+        return view('hr_leave_requests', [
+            'leaveRequests' => $leaveRequests,
+            'departments' => $departments,
+            'stats' => $stats,
+            'filters' => [
+                'status' => $status,
+                'department' => $department,
+                'date_range' => $dateRange,
+                'search' => $search
+            ]
         ]);
     }
 }

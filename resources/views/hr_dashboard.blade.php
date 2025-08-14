@@ -74,7 +74,7 @@
                     Recent Leave Requests
                 </h2>
                 
-                <a href="/hr-leave-requests" class="btn btn-sm btn-outline">
+                <a href="{{ route('hr.leave.requests') }}" class="btn btn-sm btn-outline">
                     View All Requests
                     <i class="fi-rr-arrow-right ml-2"></i>
                 </a>

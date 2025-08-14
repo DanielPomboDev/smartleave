@@ -49,29 +49,10 @@ use App\Models\LeaveRequest;
                         <input type="text" 
                                name="search" 
                                id="searchInput"
-                               class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-20" 
+                               class="input input-bordered border-gray-300 focus:border-blue-500 w-full" 
                                value="{{ $filters['search'] }}" 
                                placeholder="Type employee name..."
                                autocomplete="off">
-                        
-                        <!-- Clear button (only show when there's text) -->
-                        @if(!empty($filters['search']))
-                            <button type="button" 
-                                    onclick="clearSearch()" 
-                                    class="absolute inset-y-0 right-12 px-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                                    title="Clear search">
-                                <i class="fi-rr-cross text-sm"></i>
-                            </button>
-                        @endif
-                        
-                        <!-- Search button -->
-                        <button type="submit" id="searchButton" class="absolute inset-y-0 right-0 px-3 flex items-center bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition-colors">
-                            <i class="fi-rr-search" id="searchIcon"></i>
-                            <i class="fi-rr-loading animate-spin hidden" id="loadingIcon"></i>
-                        </button>
-                    </div>
-                    <div class="label">
-                        <span class="label-text-alt text-gray-500">Search by first name or last name</span>
                     </div>
                 </div>
             </form>
@@ -405,10 +386,68 @@ use App\Models\LeaveRequest;
             document.getElementById('leaveDetailsModal').classList.remove('modal-open');
         }
 
-        // Function to clear search input
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('filterForm').submit(); // Submit the form to apply new filters
+        // Function to reset all filters
+        function resetFilters() {
+            document.getElementById('filterForm').reset();
+            document.getElementById('filterForm').submit();
+        }
+
+        <script>
+        // Add CSS for smooth animations
+        const style = document.createElement('style');
+        style.textContent = `
+            .search-input-focus {
+                transform: scale(1.02);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            
+            .filter-badge {
+                transition: all 0.2s ease-in-out;
+                cursor: pointer;
+            }
+            
+            .filter-badge:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            
+            .search-results-enter {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            
+            .search-results-enter-active {
+                opacity: 1;
+                transform: translateY(0);
+                transition: all 0.3s ease-out;
+            }
+            
+            .table-row-hover {
+                transition: background-color 0.2s ease-in-out;
+            }
+            
+            .loading-pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Open leave details modal
+        function openLeaveModal(name, leaveType) {
+            document.getElementById('employeeName').textContent = name;
+            document.getElementById('leaveType').textContent = leaveType;
+            document.getElementById('employeeInitials').textContent = name.split(' ').map(n => n[0]).join('');
+            document.getElementById('leaveDetailsModal').classList.add('modal-open');
+        }
+        
+        // Close leave details modal
+        function closeLeaveModal() {
+            document.getElementById('leaveDetailsModal').classList.remove('modal-open');
         }
 
         // Function to reset all filters
@@ -417,56 +456,30 @@ use App\Models\LeaveRequest;
             document.getElementById('filterForm').submit();
         }
 
-        // Real-time search functionality with debouncing
-        let searchTimeout;
-        const searchInput = document.getElementById('searchInput');
-        const searchButton = document.getElementById('searchButton');
-        const searchIcon = document.getElementById('searchIcon');
-        const loadingIcon = document.getElementById('loadingIcon');
-        
-        if (searchInput) {
-            // Add focus effects
-            searchInput.addEventListener('focus', function() {
-                this.parentElement.classList.add('search-input-focus');
-            });
-            
-            searchInput.addEventListener('blur', function() {
-                this.parentElement.classList.remove('search-input-focus');
-            });
-
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                
-                // Show loading indicator
-                searchButton.disabled = true;
-                searchIcon.classList.add('hidden');
-                loadingIcon.classList.remove('hidden');
-                
-                // Debounce the search to avoid too many requests
-                searchTimeout = setTimeout(() => {
-                    // Submit the form after user stops typing for 500ms
-                    document.getElementById('filterForm').submit();
-                }, 500);
-            });
-
-            // Handle Enter key press
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    clearTimeout(searchTimeout);
-                    document.getElementById('filterForm').submit();
-                }
-            });
-
-            // Focus search input on page load if there's a search term
-            if (searchInput.value) {
-                searchInput.focus();
-                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-            }
-        }
-
-        // Add visual feedback for active filters
+        // Handle Enter key press for search
         document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            
+            if (searchInput) {
+                // Add focus effects
+                searchInput.addEventListener('focus', function() {
+                    this.parentElement.classList.add('search-input-focus');
+                });
+                
+                searchInput.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('search-input-focus');
+                });
+
+                // Handle Enter key press
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('filterForm').submit();
+                    }
+                });
+            }
+
+            // Add visual feedback for active filters
             const activeFilters = document.querySelectorAll('.badge');
             activeFilters.forEach(badge => {
                 badge.classList.add('filter-badge');
@@ -483,54 +496,6 @@ use App\Models\LeaveRequest;
             const tableRows = document.querySelectorAll('tbody tr');
             tableRows.forEach(row => {
                 row.classList.add('table-row-hover');
-            });
-
-            // Show success message if there are results
-            @if($leaveRequests->total() > 0 && !empty($filters['search']))
-                showNotification('Search completed successfully!', 'success');
-            @endif
-        });
-
-        // Function to show notifications
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} fixed top-4 right-4 z-50 max-w-sm shadow-lg search-results-enter`;
-            notification.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <i class="fi-rr-${type === 'success' ? 'check' : type === 'error' ? 'cross' : 'info'}"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Trigger animation
-            setTimeout(() => {
-                notification.classList.add('search-results-enter-active');
-            }, 10);
-            
-            // Auto-remove after 3 seconds
-            setTimeout(() => {
-                notification.classList.remove('search-results-enter-active');
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }, 3000);
-        }
-
-        // Add loading state to form submission
-        document.getElementById('filterForm').addEventListener('submit', function() {
-            const submitButtons = this.querySelectorAll('button[type="submit"]');
-            submitButtons.forEach(button => {
-                button.disabled = true;
-                const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fi-rr-loading animate-spin mr-1"></i>Loading...';
-                
-                // Re-enable after a delay (in case of errors)
-                setTimeout(() => {
-                    button.disabled = false;
-                    button.innerHTML = originalText;
-                }, 5000);
             });
         });
     </script>

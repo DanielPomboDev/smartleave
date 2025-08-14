@@ -36,12 +36,12 @@ return [
         [
             'label' => 'Leave Requests',
             'icon' => 'fas fa-clock',
-            'route' => 'leave.requests',
+            'route' => 'hr.leave.requests',
         ],
         [
             'label' => 'Leave Records',
             'icon' => 'fas fa-coins',
-            'route' => 'leave.credits',
+            'route' => 'hr.leave.credits',
         ],
         [
             'label' => 'Employees',

@@ -10,17 +10,18 @@
             </h2>
             
             <!-- Filter Controls -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <form method="GET" action="{{ route('hr.leave.requests') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium text-gray-700">Status</span>
                     </label>
-                    <select class="select select-bordered border-gray-300 focus:border-blue-500 w-full">
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="final_approval">Final Approval</option>
-                        <option value="rejected">Rejected</option>
+                    <select name="status" class="select select-bordered border-gray-300 focus:border-blue-500 w-full" onchange="this.form.submit()">
+                        <option value="all" {{ (isset($filters['status']) && $filters['status'] === 'all') ? 'selected' : '' }}>All Status</option>
+                        <option value="{{ \App\Models\LeaveRequest::STATUS_PENDING }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_PENDING) ? 'selected' : '' }}>Pending</option>
+                        <option value="{{ \App\Models\LeaveRequest::STATUS_RECOMMENDED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_RECOMMENDED) ? 'selected' : '' }}>Recommended</option>
+                        <option value="{{ \App\Models\LeaveRequest::STATUS_HR_APPROVED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_HR_APPROVED) ? 'selected' : '' }}>HR Approved</option>
+                        <option value="{{ \App\Models\LeaveRequest::STATUS_APPROVED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_APPROVED) ? 'selected' : '' }}>Approved</option>
+                        <option value="{{ \App\Models\LeaveRequest::STATUS_DISAPPROVED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_DISAPPROVED) ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </div>
                 
@@ -28,12 +29,13 @@
                     <label class="label">
                         <span class="label-text font-medium text-gray-700">Department</span>
                     </label>
-                    <select class="select select-bordered border-gray-300 focus:border-blue-500 w-full">
-                        <option value="all">All Departments</option>
-                        <option value="it">IT Department</option>
-                        <option value="hr">HR Department</option>
-                        <option value="finance">Finance Department</option>
-                        <option value="operations">Operations</option>
+                    <select name="department" class="select select-bordered border-gray-300 focus:border-blue-500 w-full" onchange="this.form.submit()">
+                        <option value="all" {{ (isset($filters['department']) && $filters['department'] === 'all') ? 'selected' : '' }}>All Departments</option>
+                        @if(isset($departments))
+                            @foreach($departments as $dept)
+                                <option value="{{ $dept->id }}" {{ (isset($filters['department']) && $filters['department'] == $dept->id) ? 'selected' : '' }}>{{ $dept->name }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
                 
@@ -41,12 +43,11 @@
                     <label class="label">
                         <span class="label-text font-medium text-gray-700">Date Range</span>
                     </label>
-                    <select class="select select-bordered border-gray-300 focus:border-blue-500 w-full">
-                        <option value="all">All Time</option>
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="custom">Custom Range</option>
+                    <select name="date_range" class="select select-bordered border-gray-300 focus:border-blue-500 w-full" onchange="this.form.submit()">
+                        <option value="all" {{ (isset($filters['date_range']) && $filters['date_range'] === 'all') ? 'selected' : '' }}>All Time</option>
+                        <option value="today" {{ (isset($filters['date_range']) && $filters['date_range'] === 'today') ? 'selected' : '' }}>Today</option>
+                        <option value="week" {{ (isset($filters['date_range']) && $filters['date_range'] === 'week') ? 'selected' : '' }}>This Week</option>
+                        <option value="month" {{ (isset($filters['date_range']) && $filters['date_range'] === 'month') ? 'selected' : '' }}>This Month</option>
                     </select>
                 </div>
                 
@@ -55,72 +56,13 @@
                         <span class="label-text font-medium text-gray-700">Search</span>
                     </label>
                     <div class="relative">
-                        <input type="text" placeholder="Search employee name" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10">
-                        <button class="absolute right-2 top-1/2 -translate-y-1/2">
+                        <input type="text" name="search" placeholder="Search employee name" value="{{ $filters['search'] ?? '' }}" class="input input-bordered border-gray-300 focus:border-blue-500 w-full pr-10">
+                        <button class="absolute right-2 top-1/2 -translate-y-1/2" type="submit">
                             <i class="fi-rr-search text-gray-400"></i>
                         </button>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Custom Date Range (Hidden by default) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden" id="customDateRange">
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700">From Date</span>
-                    </label>
-                    <input type="date" class="input input-bordered border-gray-300 focus:border-blue-500 w-full">
-                </div>
-                
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700">To Date</span>
-                    </label>
-                    <input type="date" class="input input-bordered border-gray-300 focus:border-blue-500 w-full">
-                </div>
-            </div>
-            
-            <!-- Stats Summary -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-blue-600">Pending</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1">12</h3>
-                        </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
-                            <!-- Heroicon: Clock -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-green-600">Approved</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1">28</h3>
-                        </div>
-                        <div class="bg-green-100 p-3 rounded-full">
-                            <!-- Heroicon: Check Circle -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2l4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-red-600">Rejected</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1">5</h3>
-                        </div>
-                        <div class="bg-red-100 p-3 rounded-full">
-                            <!-- Heroicon: X Circle -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </form>
             
             <!-- Leave Requests Table -->
             <div class="overflow-x-auto">
@@ -137,153 +79,67 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">DP</span>
+                        @forelse($leaveRequests as $leaveRequest)
+                            <tr>
+                                <td class="flex items-center space-x-3">
+                                    <div class="avatar">
+                                        <div class="mask mask-squircle w-8 h-8">
+                                            <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
+                                                {{ strtoupper(substr($leaveRequest->user->first_name, 0, 1) . substr($leaveRequest->user->last_name, 0, 1)) }}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Daniel Pombo</div>
-                                    <div class="text-xs text-gray-500">IT Department</div>
-                                </div>
-                            </td>
-                            <td>Vacation Leave</td>
-                            <td>May 15, 2023</td>
-                            <td>Jun 1-5, 2023</td>
-                            <td>5</td>
-                            <td>
-                                <span class="badge badge-warning">Pending</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 1]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-green-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">JS</span>
+                                    <div>
+                                        <div class="font-bold">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</div>
+                                        <div class="text-xs text-gray-500">{{ $leaveRequest->user->department->name ?? '' }}</div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Jane Smith</div>
-                                    <div class="text-xs text-gray-500">Finance Department</div>
-                                </div>
-                            </td>
-                            <td>Sick Leave</td>
-                            <td>May 20, 2023</td>
-                            <td>May 22, 2023</td>
-                            <td>1</td>
-                            <td>
-                                <span class="badge badge-success">Approved</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 2]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-purple-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">RJ</span>
+                                </td>
+                                <td>{{ \App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</td>
+                                <td>{{ $leaveRequest->created_at->format('M d, Y') }}</td>
+                                <td>
+                                    @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                        {{ $leaveRequest->start_date->format('M d, Y') }}
+                                    @else
+                                        {{ $leaveRequest->start_date->format('M d') }}-{{ $leaveRequest->end_date->format('d, Y') }}
+                                    @endif
+                                </td>
+                                <td>{{ $leaveRequest->number_of_days }}</td>
+                                <td>
+                                    @if($leaveRequest->status === \App\Models\LeaveRequest::STATUS_PENDING)
+                                        <span class="badge badge-warning">Pending</span>
+                                    @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                                        <span class="badge badge-info">Recommended</span>
+                                    @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_HR_APPROVED)
+                                        <span class="badge badge-primary">HR Approved</span>
+                                    @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_APPROVED)
+                                        <span class="badge badge-success">Approved</span>
+                                    @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_DISAPPROVED)
+                                        <span class="badge badge-error">Rejected</span>
+                                    @else
+                                        <span class="badge">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="flex space-x-2">
+                                        <a href="{{ route('leave.approve.start', ['id' => $leaveRequest->id]) }}" class="btn btn-xs btn-primary">
+                                            View
+                                        </a>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Robert Johnson</div>
-                                    <div class="text-xs text-gray-500">HR Department</div>
-                                </div>
-                            </td>
-                            <td>Emergency Leave</td>
-                            <td>May 17, 2023</td>
-                            <td>May 18-19, 2023</td>
-                            <td>2</td>
-                            <td>
-                                <span class="badge badge-warning">Pending</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 3]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-yellow-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">MW</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Maria Williams</div>
-                                    <div class="text-xs text-gray-500">Operations Department</div>
-                                </div>
-                            </td>
-                            <td>Maternity Leave</td>
-                            <td>Apr 10, 2023</td>
-                            <td>May 1-30, 2023</td>
-                            <td>30</td>
-                            <td>
-                                <span class="badge badge-success">Approved</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 4]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-red-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">TB</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Thomas Brown</div>
-                                    <div class="text-xs text-gray-500">IT Department</div>
-                                </div>
-                            </td>
-                            <td>Sick Leave</td>
-                            <td>May 12, 2023</td>
-                            <td>May 13, 2023</td>
-                            <td>1</td>
-                            <td>
-                                <span class="badge badge-error">Rejected</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('leave.approve.start', ['id' => 5]) }}" class="btn btn-xs btn-primary">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-gray-500">No leave requests found</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
             
             <!-- Pagination -->
-            <div class="flex justify-end mt-6">
-                <div class="btn-group">
-                    <button class="btn btn-sm">«</button>
-                    <button class="btn btn-sm btn-active">1</button>
-                    <button class="btn btn-sm">2</button>
-                    <button class="btn btn-sm">3</button>
-                    <button class="btn btn-sm">»</button>
+            <div class="flex justify-center mt-6">
+                <div class="pagination">
+                    {{ $leaveRequests->appends(request()->query())->links('pagination::simple-tailwind') }}
                 </div>
             </div>
         </div>
@@ -384,7 +240,7 @@
                             <span>Flight_Booking.pdf</span>
                             <a href="#" class="ml-auto text-blue-500 hover:underline">
                                 <i class="fi-rr-download"></i>
-                            </a>
+                                </a>
                         </div>
                     </div>
                 </div>

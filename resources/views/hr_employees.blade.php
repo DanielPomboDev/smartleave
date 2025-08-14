@@ -203,7 +203,7 @@
                             <option disabled selected>Select Account Type</option>
                             <option value="employee">Employee</option>
                             <option value="hr">HR</option>
-                            <option value="admin">Admin</option>
+                            <option value="department_admin">Department Admin</option>
                         </select>
                     </div>
                     
@@ -296,7 +296,7 @@
                             <option disabled>Select Account Type</option>
                             <option value="employee">Employee</option>
                             <option value="hr">HR</option>
-                            <option value="admin">Admin</option>
+                            <option value="department_admin">Department Admin</option>
                         </select>
                     </div>
                     

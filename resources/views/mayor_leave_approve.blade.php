@@ -1,6 +1,29 @@
 <x-layouts.layout>
-    <x-slot:title>Final Approval - Leave Request</x-slot:title>
-    <x-slot:header>Final Approval - Leave Request</x-slot:header>
+    <x-slot:title>
+        @if($leaveRequest->status === \App\Models\LeaveRequest::STATUS_HR_APPROVED)
+            Final Approval - Leave Request
+        @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_APPROVED)
+            Approved - Leave Request
+        @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_DISAPPROVED)
+            Rejected - Leave Request
+        @else
+            Leave Request Details
+        @endif
+    </x-slot:title>
+    <x-slot:header>
+        @if($leaveRequest->status === \App\Models\LeaveRequest::STATUS_HR_APPROVED)
+            <i class="fi-rr-check-circle text-green-500 mr-2"></i>
+            Leave Final Approval
+        @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_APPROVED)
+            <i class="fi-rr-check-circle text-green-500 mr-2"></i>
+            Leave Request Approved
+        @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_DISAPPROVED)
+            <i class="fi-rr-cross-circle text-red-500 mr-2"></i>
+            Leave Request Rejected
+        @else
+            Leave Request Details
+        @endif
+    </x-slot:header>
 
     <div class="card bg-white shadow-md mb-6">
         <div class="card-body">
@@ -116,19 +139,41 @@
             @endif
 
             <!-- Final Approval Action -->
-            <form method="POST" action="{{ route('mayor.leave.approve.process', $leaveRequest->id) }}" class="flex justify-end mt-6">
-                @csrf
-                <input type="hidden" name="decision" id="decisionInput" value="approve" />
-                <input type="hidden" name="comments" id="commentsInput" />
-                <button type="submit" class="btn btn-success" onclick="document.getElementById('decisionInput').value='approve'">
-                    <i class="fi-rr-check mr-2"></i>
-                    Approve
-                </button>
-                <button type="submit" class="btn btn-error ml-2" onclick="document.getElementById('decisionInput').value='disapprove'">
-                    <i class="fi-rr-cross mr-2"></i>
-                    Reject
-                </button>
-            </form>
+            @if($leaveRequest->status === \App\Models\LeaveRequest::STATUS_HR_APPROVED)
+                <form method="POST" action="{{ route('mayor.leave.approve.process', $leaveRequest->id) }}" class="flex justify-end mt-6">
+                    @csrf
+                    <input type="hidden" name="decision" id="decisionInput" value="approve" />
+                    <input type="hidden" name="comments" id="commentsInput" />
+                    <button type="submit" class="btn btn-success" onclick="document.getElementById('decisionInput').value='approve'">
+                        <i class="fi-rr-check mr-2"></i>
+                        Approve
+                    </button>
+                    <button type="submit" class="btn btn-error ml-2" onclick="document.getElementById('decisionInput').value='disapprove'">
+                        <i class="fi-rr-cross mr-2"></i>
+                        Reject
+                    </button>
+                </form>
+            @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_APPROVED)
+                <div class="alert alert-success mt-6">
+                    <div class="flex items-center">
+                        <i class="fi-rr-check-circle text-2xl mr-3"></i>
+                        <div>
+                            <h3 class="font-bold">Leave Request Approved</h3>
+                            <p>This leave request has been approved by the Mayor.</p>
+                        </div>
+                    </div>
+                </div>
+            @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_DISAPPROVED)
+                <div class="alert alert-error mt-6">
+                    <div class="flex items-center">
+                        <i class="fi-rr-cross-circle text-2xl mr-3"></i>
+                        <div>
+                            <h3 class="font-bold">Leave Request Rejected</h3>
+                            <p>This leave request has been rejected by the Mayor.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </x-layouts.layout> 
