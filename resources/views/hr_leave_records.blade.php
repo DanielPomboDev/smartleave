@@ -83,25 +83,25 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($leaveRecords as $record)
+                        @forelse($users as $user)
                             <tr>
                                 <td class="flex items-center space-x-3">
                                     <div class="avatar">
                                         <div class="mask mask-squircle w-8 h-8">
                                             <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
-                                                {{ strtoupper(substr($record->user->first_name ?? 'N', 0, 1) . substr($record->user->last_name ?? 'A', 0, 1)) }}
+                                                {{ strtoupper(substr($user->first_name ?? 'N', 0, 1) . substr($user->last_name ?? 'A', 0, 1)) }}
                                             </span>
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="font-bold">{{ $record->user->first_name ?? 'No First Name' }} {{ $record->user->last_name ?? 'No Last Name' }}</div>
-                                        <div class="text-xs text-gray-500">{{ $record->user->user_id ?? 'No ID' }}</div>
+                                        <div class="font-bold">{{ $user->first_name ?? 'No First Name' }} {{ $user->last_name ?? 'No Last Name' }}</div>
+                                        <div class="text-xs text-gray-500">{{ $user->user_id ?? 'No ID' }}</div>
                                     </div>
                                 </td>
-                                <td>{{ $record->user->position ?? 'No Position' }}</td>
-                                <td>{{ $record->user->department->name ?? 'No Department' }}</td>
+                                <td>{{ $user->position ?? 'No Position' }}</td>
+                                <td>{{ $user->department->name ?? 'No Department' }}</td>
                                 <td>
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('{{ $record->user->id ?? 1 }}')">
+                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('{{ $user->user_id }}')">
                                         <i class="fi-rr-eye"></i>
                                         <span>View Record</span>
                                     </button>
@@ -124,7 +124,7 @@
                                 <td>IT Specialist</td>
                                 <td>IT Department</td>
                                 <td>
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord(1)">
+                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('DA001')">
                                         <i class="fi-rr-eye"></i>
                                         <span>View Record</span>
                                     </button>
@@ -145,7 +145,7 @@
                                 <td>HR Manager</td>
                                 <td>Human Resources</td>
                                 <td>
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord(2)">
+                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('DA002')">
                                         <i class="fi-rr-eye"></i>
                                         <span>View Record</span>
                                     </button>
@@ -159,22 +159,22 @@
             <!-- Pagination -->
             <div class="flex justify-end mt-6">
                 <div class="btn-group">
-                    @if($leaveRecords->onFirstPage())
+                    @if($users->onFirstPage())
                         <button class="btn btn-sm" disabled>«</button>
                     @else
-                        <a href="{{ $leaveRecords->previousPageUrl() }}" class="btn btn-sm">«</a>
+                        <a href="{{ $users->previousPageUrl() }}" class="btn btn-sm">«</a>
                     @endif
 
-                    @for($i = 1; $i <= $leaveRecords->lastPage(); $i++)
-                        @if($i == $leaveRecords->currentPage())
+                    @for($i = 1; $i <= $users->lastPage(); $i++)
+                        @if($i == $users->currentPage())
                             <button class="btn btn-sm btn-active">{{ $i }}</button>
                         @else
-                            <a href="{{ $leaveRecords->url($i) }}" class="btn btn-sm">{{ $i }}</a>
+                            <a href="{{ $users->url($i) }}" class="btn btn-sm">{{ $i }}</a>
                         @endif
                     @endfor
 
-                    @if($leaveRecords->hasMorePages())
-                        <a href="{{ $leaveRecords->nextPageUrl() }}" class="btn btn-sm">»</a>
+                    @if($users->hasMorePages())
+                        <a href="{{ $users->nextPageUrl() }}" class="btn btn-sm">»</a>
                     @else
                         <button class="btn btn-sm" disabled>»</button>
                     @endif
@@ -214,8 +214,8 @@
         });
 
         // Function to view leave record
-        function viewRecord(employeeId) {
-            window.location.href = `/leave-record/${employeeId}`;
+        function viewRecord(userId) {
+            window.location.href = `/leave-record/${userId}`;
         }
     </script>
 </x-layouts.layout>

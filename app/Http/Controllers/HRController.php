@@ -273,45 +273,19 @@ class HRController extends Controller
 
     public function showLeaveRecord($id)
     {
-        // Create sample data for testing
-        $employee = new \stdClass();
-        $employee->id = $id;
-        $employee->first_name = 'Daniel';
-        $employee->last_name = 'Pombo';
-        $employee->user_id = 'EMP-' . str_pad($id, 3, '0', STR_PAD_LEFT);
-        $employee->position = 'IT Specialist';
+        // Get the employee with their department
+        $employee = User::with('department')->findOrFail($id);
         
-        // Create a sample department
-        $department = new \stdClass();
-        $department->name = 'IT Department';
-        $employee->department = $department;
-
-        // Create sample leave records
-        $leaveRecords = collect([
-            (object)[
-                'leave_type' => 'vacation',
-                'start_date' => now()->subDays(10),
-                'end_date' => now()->subDays(5),
-                'number_of_days' => 5,
-                'status' => 'approved',
-                'reason' => 'Vacation leave',
-                'created_at' => now()->subDays(15)
-            ],
-            (object)[
-                'leave_type' => 'sick',
-                'start_date' => now()->subDays(20),
-                'end_date' => now()->subDays(19),
-                'number_of_days' => 1,
-                'status' => 'approved',
-                'reason' => 'Medical appointment',
-                'created_at' => now()->subDays(21)
-            ]
-        ]);
-
-        return view('hr_leave_record', [
-            'employee' => $employee,
-            'leaveRecords' => $leaveRecords
-        ]);
+        // Get leave records for this employee, ordered by year/month descending
+        $leaveRecords = \App\Models\LeaveRecord::where('user_id', $employee->user_id)
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->year;
+            });
+        
+        return view('hr_leave_record', compact('employee', 'leaveRecords'));
     }
 
     /**

@@ -35,8 +35,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leave-approve/{id}', [LeaveController::class, 'showHRApproval'])->name('leave.approve.start');
     Route::post('/leave-approve/{id}/process', [LeaveController::class, 'processHRApproval'])->name('leave.approve.process');
 
-    Route::get('/leave-records', [HRController::class, 'leaveRecords'])->name('leave.records');
-    Route::get('/leave-record/{id}', [HRController::class, 'showLeaveRecord'])->name('leave.record.show');
+    Route::get('/leave-records', [\App\Http\Controllers\LeaveRecordController::class, 'index'])->name('leave.records');
+    Route::get('/leave-record/{id}', [\App\Http\Controllers\LeaveRecordController::class, 'show'])->name('leave.record.show');
 
     Route::get('/hr-employees', [HRController::class, 'employees'])->name('hr.employees');
     Route::post('/hr-employees', [HRController::class, 'store'])->name('hr.employees.store');

@@ -56,6 +56,14 @@ class User extends Authenticatable
     }
     
     /**
+     * Get the leave records for the user.
+     */
+    public function leaveRecords()
+    {
+        return $this->hasMany(LeaveRecord::class, 'user_id', 'user_id');
+    }
+    
+    /**
      * Get the user's full name.
      *
      * @return string
