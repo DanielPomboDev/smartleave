@@ -41,7 +41,7 @@ return [
         [
             'label' => 'Leave Records',
             'icon' => 'fas fa-coins',
-            'route' => 'hr.leave.credits',
+            'route' => 'leave.records',
         ],
         [
             'label' => 'Employees',

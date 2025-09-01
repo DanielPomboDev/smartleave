@@ -126,14 +126,14 @@
                             <label class="label">
                                 <span class="label-text font-medium text-gray-700">Start Date</span>
                             </label>
-                            <input type="date" name="startDate" class="input input-bordered border-gray-300 focus:border-blue-500 w-full" id="startDate" onchange="calculateDays()">
+                            <input type="date" name="startDate" class="input input-bordered border-gray-300 focus:border-blue-500 w-full" id="startDate" onchange="validateDates()">
                         </div>
                         
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text font-medium text-gray-700">End Date</span>
                             </label>
-                            <input type="date" name="endDate" class="input input-bordered border-gray-300 focus:border-blue-500 w-full" id="endDate" onchange="calculateDays()">
+                            <input type="date" name="endDate" class="input input-bordered border-gray-300 focus:border-blue-500 w-full" id="endDate" onchange="validateDates()">
                         </div>
                     </div>
                     
@@ -334,7 +334,6 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             const numberOfDaysInput = document.getElementById('numberOfDays');
-            const appliedFor = document.querySelector('select').value;
             
             if (!startDate || !endDate) {
                 numberOfDaysInput.value = '';
@@ -348,16 +347,89 @@
             const diffTime = Math.abs(end - start);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
             
-            // For whole days, we'll always use full days
-            // Half day options will be handled by the leave type selection
-            const days = diffDays;
-            
             // Update the number of days input with whole number
-            numberOfDaysInput.value = Math.floor(days);
+            numberOfDaysInput.value = Math.floor(diffDays);
             
         } catch (error) {
             console.error('Error calculating days:', error);
         }
+    }
+    
+    // Function to validate dates based on leave type
+    function validateDates() {
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const leaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+        
+        if (!startDateInput || !endDateInput) return;
+        
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        
+        if (!startDate || !endDate) return;
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+        
+        // Check if end date is before start date
+        if (end < start) {
+            showError('End date cannot be earlier than start date', 'step2');
+            return false;
+        }
+        
+        // Check if start date is in the past
+        if (start < today) {
+            showError('Start date cannot be in the past', 'step2');
+            return false;
+        }
+        
+        // Vacation leave specific validation (5 days advance notice)
+        if (leaveType === 'vacation') {
+            const daysDifference = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDifference < 5) {
+                showError('Vacation leave must be applied at least 5 days before the start date', 'step2');
+                return false;
+            }
+        }
+        
+        // If all validations pass, calculate days
+        calculateDays();
+        return true;
+    }
+    
+    // Function to update date restrictions based on leave type
+    function updateDateRestrictions(leaveType) {
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (!startDateInput || !endDateInput) return;
+        
+        if (leaveType === 'vacation') {
+            // For vacation leave, set minimum start date to 5 days from today
+            const minVacationDate = new Date();
+            minVacationDate.setDate(minVacationDate.getDate() + 5);
+            const minVacationDateStr = minVacationDate.toISOString().split('T')[0];
+            
+            startDateInput.min = minVacationDateStr;
+            // If current start date is less than minimum, update it
+            if (startDateInput.value && startDateInput.value < minVacationDateStr) {
+                startDateInput.value = minVacationDateStr;
+                // Also update end date if it's before the new start date
+                if (endDateInput.value < minVacationDateStr) {
+                    endDateInput.value = minVacationDateStr;
+                }
+            }
+        } else if (leaveType === 'sick') {
+            // For sick leave, allow dates from today onwards
+            startDateInput.min = today;
+        }
+        
+        // Re-validate dates after changing restrictions
+        validateDates();
     }
     
     // Function to show/hide location specification input
@@ -444,6 +516,9 @@
                 }
             }
         }
+        
+        // Update date restrictions based on leave type
+        updateDateRestrictions(leaveType);
     }
     
     // Function to toggle 'Other' specification input
@@ -469,6 +544,7 @@
         if (radio) {
             radio.checked = true;
             showSubtype(leaveType);
+            updateDateRestrictions(leaveType);
         }
     }
 
@@ -539,6 +615,11 @@
     };
 
     // Function to validate each step
+    function getSelectedLeaveType() {
+        const leaveTypeRadio = document.querySelector('input[name="leaveType"]:checked');
+        return leaveTypeRadio ? leaveTypeRadio.value : null;
+    }
+    
     function validateStep(step) {
         // Remove any existing error messages
         const errorMessages = document.querySelectorAll('.validation-error');
@@ -592,19 +673,15 @@
                 isValid = false;
             }
             
+            // Validate dates
             if (startDate && endDate && startDate.value && endDate.value) {
-                // Validate that end date is not before start date
-                const start = new Date(startDate.value);
-                const end = new Date(endDate.value);
-                
-                if (end < start) {
-                    showValidationError('End date cannot be before start date', 'step2');
+                if (!validateDates()) {
                     isValid = false;
                 }
             }
             
             // Validate location based on leave type
-            const leaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+            const leaveType = getSelectedLeaveType();
             if (leaveType) {
                 const locationSection = document.getElementById(leaveType + 'Location');
                 if (locationSection && !locationSection.classList.contains('hidden')) {
@@ -657,6 +734,15 @@
         
         // Scroll to the error message
         errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Helper function to show general errors
+    function showError(message, stepId) {
+        // Remove any existing error messages
+        const existingErrors = document.querySelectorAll('.validation-error');
+        existingErrors.forEach(el => el.remove());
+        
+        showValidationError(message, stepId);
     }
     
     window.prevStep = function(currentStep) {
@@ -1120,6 +1206,47 @@
             const successMessage = document.getElementById('successMessage');
             successMessage.textContent = 'Your leave request has been submitted successfully.';
             successModal.style.display = 'flex';
+        }
+        
+        // Initialize date fields and set up event handlers
+        const today = new Date().toISOString().split('T')[0];
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        
+        // Set min dates to prevent selecting past dates
+        if (startDateInput) {
+            startDateInput.min = today;
+        }
+        
+        if (endDateInput) {
+            endDateInput.min = today;
+        }
+        
+        // Add event listener to update end date min when start date changes
+        if (startDateInput) {
+            startDateInput.addEventListener('change', function() {
+                if (endDateInput && this.value) {
+                    endDateInput.min = this.value;
+                    if (endDateInput.value && endDateInput.value < this.value) {
+                        endDateInput.value = this.value;
+                    }
+                    validateDates();
+                }
+            });
+        }
+        
+        // Add event listener to update date restrictions when leave type changes
+        const leaveTypeInputs = document.querySelectorAll('input[name="leaveType"]');
+        leaveTypeInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                updateDateRestrictions(this.value);
+            });
+        });
+        
+        // Set initial date restrictions based on default leave type (if any is selected)
+        const selectedLeaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+        if (selectedLeaveType) {
+            updateDateRestrictions(selectedLeaveType);
         }
     });
     </script>

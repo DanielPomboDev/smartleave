@@ -10,14 +10,14 @@
                     <div class="avatar mr-6">
                         <div class="mask mask-squircle w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600">
                             <span class="text-white text-2xl font-bold flex items-center justify-center w-full h-full">
-                                DP
+                                {{ strtoupper(substr($employee->first_name ?? 'N', 0, 1) . substr($employee->last_name ?? 'A', 0, 1)) }}
                             </span>
                         </div>
                     </div>
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Daniel Pombo</h2>
-                        <p class="text-lg text-gray-600 mb-1">IT Department • IT Specialist</p>
-                        <p class="text-sm text-gray-500">Employee ID: EMP-001</p>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">{{ $employee->first_name ?? 'First Name' }} {{ $employee->last_name ?? 'Last Name' }}</h2>
+                        <p class="text-lg text-gray-600 mb-1">{{ $employee->department->name ?? 'Department' }} • {{ $employee->position ?? 'Position' }}</p>
+                        <p class="text-sm text-gray-500">Employee ID: {{ $employee->user_id ?? 'ID' }}</p>
                     </div>
                 </div>
                 <button onclick="openAddUndertimeModal()" class="btn bg-blue-500 hover:bg-blue-600 text-white border-none">

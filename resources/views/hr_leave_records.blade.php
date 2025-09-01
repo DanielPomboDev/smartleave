@@ -83,29 +83,75 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-8 h-8">
-                                        <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
-                                            DP
-                                        </span>
+                        @forelse($leaveRecords as $record)
+                            <tr>
+                                <td class="flex items-center space-x-3">
+                                    <div class="avatar">
+                                        <div class="mask mask-squircle w-8 h-8">
+                                            <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">
+                                                {{ strtoupper(substr($record->user->first_name ?? 'N', 0, 1) . substr($record->user->last_name ?? 'A', 0, 1)) }}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">Daniel Pombo</div>
-                                    <div class="text-xs text-gray-500">EMP-001</div>
-                                </div>
-                            </td>
-                            <td>IT Specialist</td>
-                            <td>IT Department</td>
-                            <td>
-                                <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord()">
-                                    <i class="fi-rr-eye"></i>
-                                    <span>View Record</span>
-                                </button>
-                            </td>
-                        </tr>
+                                    <div>
+                                        <div class="font-bold">{{ $record->user->first_name ?? 'No First Name' }} {{ $record->user->last_name ?? 'No Last Name' }}</div>
+                                        <div class="text-xs text-gray-500">{{ $record->user->user_id ?? 'No ID' }}</div>
+                                    </div>
+                                </td>
+                                <td>{{ $record->user->position ?? 'No Position' }}</td>
+                                <td>{{ $record->user->department->name ?? 'No Department' }}</td>
+                                <td>
+                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('{{ $record->user->id ?? 1 }}')">
+                                        <i class="fi-rr-eye"></i>
+                                        <span>View Record</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <!-- Sample data for testing -->
+                            <tr>
+                                <td class="flex items-center space-x-3">
+                                    <div class="avatar">
+                                        <div class="mask mask-squircle w-8 h-8">
+                                            <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">DP</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Daniel Pombo</div>
+                                        <div class="text-xs text-gray-500">EMP-001</div>
+                                    </div>
+                                </td>
+                                <td>IT Specialist</td>
+                                <td>IT Department</td>
+                                <td>
+                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord(1)">
+                                        <i class="fi-rr-eye"></i>
+                                        <span>View Record</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="flex items-center space-x-3">
+                                    <div class="avatar">
+                                        <div class="mask mask-squircle w-8 h-8">
+                                            <span class="bg-blue-500 text-white text-xs font-bold flex items-center justify-center w-full h-full">JS</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">John Smith</div>
+                                        <div class="text-xs text-gray-500">EMP-002</div>
+                                    </div>
+                                </td>
+                                <td>HR Manager</td>
+                                <td>Human Resources</td>
+                                <td>
+                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord(2)">
+                                        <i class="fi-rr-eye"></i>
+                                        <span>View Record</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -168,8 +214,8 @@
         });
 
         // Function to view leave record
-        function viewRecord() {
-            window.location.href = "/leave-records";
+        function viewRecord(employeeId) {
+            window.location.href = `/leave-record/${employeeId}`;
         }
     </script>
 </x-layouts.layout>

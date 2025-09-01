@@ -70,9 +70,9 @@ class HRController extends Controller
      */
     public function dashboard()
     {
-        // HR queue: show recommended and recently HR-approved
+        // HR queue: show recommended, HR-approved, and mayor-approved requests
         $hrQueue = LeaveRequest::with(['user.department'])
-            ->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED])
+            ->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED])
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
@@ -259,7 +259,7 @@ class HRController extends Controller
         // Get all departments for the filter dropdown
         $departments = Department::all();
 
-        return view('hr_leave_credits', [
+        return view('hr_leave_records', [
             'leaveRecords' => $leaveRecords,
             'departments' => $departments,
             'filters' => [
@@ -273,13 +273,40 @@ class HRController extends Controller
 
     public function showLeaveRecord($id)
     {
-        $employee = User::with(['department', 'position'])->findOrFail($id);
+        // Create sample data for testing
+        $employee = new \stdClass();
+        $employee->id = $id;
+        $employee->first_name = 'Daniel';
+        $employee->last_name = 'Pombo';
+        $employee->user_id = 'EMP-' . str_pad($id, 3, '0', STR_PAD_LEFT);
+        $employee->position = 'IT Specialist';
+        
+        // Create a sample department
+        $department = new \stdClass();
+        $department->name = 'IT Department';
+        $employee->department = $department;
 
-        // Get leave records for the employee
-        $leaveRecords = LeaveRequest::where('user_id', $id)
-            ->with(['leaveType'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Create sample leave records
+        $leaveRecords = collect([
+            (object)[
+                'leave_type' => 'vacation',
+                'start_date' => now()->subDays(10),
+                'end_date' => now()->subDays(5),
+                'number_of_days' => 5,
+                'status' => 'approved',
+                'reason' => 'Vacation leave',
+                'created_at' => now()->subDays(15)
+            ],
+            (object)[
+                'leave_type' => 'sick',
+                'start_date' => now()->subDays(20),
+                'end_date' => now()->subDays(19),
+                'number_of_days' => 1,
+                'status' => 'approved',
+                'reason' => 'Medical appointment',
+                'created_at' => now()->subDays(21)
+            ]
+        ]);
 
         return view('hr_leave_record', [
             'employee' => $employee,

@@ -35,10 +35,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leave-approve/{id}', [LeaveController::class, 'showHRApproval'])->name('leave.approve.start');
     Route::post('/leave-approve/{id}/process', [LeaveController::class, 'processHRApproval'])->name('leave.approve.process');
 
-    Route::get('/leave-credits', [HRController::class, 'leaveRecords'])->name('leave.credits');
-    Route::get('/leave-records', function () {
-        return view('hr_leave_record');
-    })->name('leave.record.show');
+    Route::get('/leave-records', [HRController::class, 'leaveRecords'])->name('leave.records');
+    Route::get('/leave-record/{id}', [HRController::class, 'showLeaveRecord'])->name('leave.record.show');
 
     Route::get('/hr-employees', [HRController::class, 'employees'])->name('hr.employees');
     Route::post('/hr-employees', [HRController::class, 'store'])->name('hr.employees.store');
@@ -133,16 +131,6 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
 
     Route::get('/leave-requests', [HRController::class, 'leaveRequests'])->name('leave.requests');
 
-    Route::get('/leave-credits', function () {
-        if (Auth::user()->user_type !== 'hr') {
-            return redirect('/employee-dashboard');
-        }
-        return view('hr_leave_credits');
-    })->name('leave.credits');
-
-    Route::get('/leave-records', function () {
-        return view('hr_leave_record');
-    })->name('leave.record.show');
 });
 
 // Mayor routes - require authentication
