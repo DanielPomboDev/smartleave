@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/hr-employees', [HRController::class, 'employees'])->name('hr.employees');
     Route::post('/hr-employees', [HRController::class, 'store'])->name('hr.employees.store');
+    Route::delete('/hr-employees/{id}', [HRController::class, 'destroy'])->name('hr.employees.destroy');
 
     Route::get('/hr-profile', function () {
         return view('hr_profile');
@@ -141,6 +142,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
     Route::post('/employees', [HRController::class, 'store'])->name('employees.store');
     Route::get('/employees/{id}/edit', [HRController::class, 'edit'])->name('employees.edit');
     Route::put('/employees/{id}', [HRController::class, 'update'])->name('employees.update');
+    Route::delete('/employees/{id}', [HRController::class, 'destroy'])->name('employees.destroy');
 
     Route::get('/profile', function () {
         if (Auth::user()->user_type !== 'hr') {

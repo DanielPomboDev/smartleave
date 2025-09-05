@@ -204,6 +204,32 @@ class HRController extends Controller
     }
 
     /**
+     * Remove the specified employee from storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($id)
+    {
+        // Find and delete the user
+        $user = User::where('user_id', $id)->firstOrFail();
+        
+        // Check if this is the only HR user
+        if ($user->user_type === 'hr') {
+            $hrCount = User::where('user_type', 'hr')->count();
+            if ($hrCount <= 1) {
+                return redirect()->route('hr.employees')
+                    ->with('error', 'Cannot delete the last HR user.');
+            }
+        }
+        
+        $user->delete();
+
+        return redirect()->route('hr.employees')
+            ->with('success', 'Employee deleted successfully.');
+    }
+
+    /**
      * Display a list of leave records with filtering and search.
      *
      * @param  \Illuminate\Http\Request  $request

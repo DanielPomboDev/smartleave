@@ -2,6 +2,37 @@
     <x-slot:title>Employees</x-slot:title>
     <x-slot:header>Employees</x-slot:header>
     
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <dialog id="deleteEmployeeModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg text-error"><i class="fi-rr-exclamation mr-2"></i>Confirm Delete</h3>
+            <p class="py-4">Are you sure you want to delete <span id="employeeNameToDelete" class="font-bold"></span>? This action cannot be undone.</p>
+            <div class="modal-action">
+                <button onclick="document.getElementById('deleteEmployeeModal').close()" class="btn btn-outline">Cancel</button>
+                <button id="confirmDeleteButton" class="btn btn-error">Delete</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+    
+    <!-- Success Modal -->
+    <dialog id="employeeSuccessModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg text-success"><i class="fi-rr-check mr-2"></i>Success!</h3>
+            <p id="employeeSuccessMessage" class="py-4">Employee information has been saved successfully.</p>
+            <div class="modal-action">
+                <button onclick="document.getElementById('employeeSuccessModal').close()" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+    
     <div class="card bg-white shadow-md mb-6">
         <div class="card-body">
             <div class="flex justify-between items-center mb-4">
@@ -99,7 +130,7 @@
                                         <i class="fi-rr-edit"></i>
                                         <span>Edit</span>
                                     </button>
-                                    <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1">
+                                    <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="confirmDeleteEmployee('{{ $user->user_id }}', '{{ $user->first_name }} {{ $user->last_name }}')">
                                         <i class="fi-rr-trash"></i>
                                         <span>Delete</span>
                                     </button>
@@ -434,5 +465,75 @@
         function closeEditEmployeeModal() {
             document.getElementById('editEmployeeModal').classList.remove('modal-open');
         }
+        
+        // Delete Employee Functions
+        let employeeIdToDelete = null;
+        
+        function confirmDeleteEmployee(employeeId, employeeName) {
+            employeeIdToDelete = employeeId;
+            document.getElementById('employeeNameToDelete').textContent = employeeName;
+            const deleteModal = document.getElementById('deleteEmployeeModal');
+            deleteModal.showModal();
+        }
+        
+        function deleteEmployee() {
+            if (!employeeIdToDelete) {
+                console.error('No employee ID to delete');
+                return;
+            }
+            
+            // Close the confirmation modal
+            document.getElementById('deleteEmployeeModal').close();
+            
+            // Create a form element to submit the DELETE request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/hr-employees/${employeeIdToDelete}`;
+            
+            // Add the CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            // Add the method spoofing for DELETE
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+            
+            // Submit the form
+            document.body.appendChild(form);
+            form.submit();
+        }
+        
+        // Add event listener to the confirm delete button
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+            if (confirmDeleteButton) {
+                confirmDeleteButton.addEventListener('click', deleteEmployee);
+            }
+            
+            @if(session('success'))
+                console.log('Success message found in session, showing success modal');
+                const successMessage = document.getElementById('employeeSuccessMessage');
+                successMessage.textContent = "{{ session('success') }}";
+                const successModal = document.getElementById('employeeSuccessModal');
+                successModal.showModal();
+                
+                // Automatically close the success modal after 3 seconds
+                setTimeout(function() {
+                    successModal.close();
+                }, 3000);
+            @endif
+            
+            @if(session('error'))
+                // Show error message if there is one
+                alert("{{ session('error') }}");
+            @endif
+        });
     </script>
 </x-layouts.layout>
