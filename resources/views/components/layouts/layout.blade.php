@@ -101,7 +101,7 @@
                             <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-[9999]" style="min-width: 320px; background: #fff !important;" onclick="event.stopPropagation();">
                                 <div class="p-4 border-b border-gray-100 font-bold text-gray-700">Notifications</div>
                                 <ul class="max-h-64 overflow-y-auto">
-                                    @if($userType === 'employee')
+                                    @if(Auth::user()->user_type === 'employee')
                                         <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
                                             <div class="flex-shrink-0 mt-1">
                                                 <i class="fas fa-check-circle text-green-500 text-lg"></i>

@@ -64,6 +64,14 @@ class User extends Authenticatable
     }
     
     /**
+     * Get the notification preferences for the user.
+     */
+    public function notificationPreferences()
+    {
+        return $this->hasOne(NotificationPreference::class, 'user_id', 'user_id');
+    }
+    
+    /**
      * Get the user's full name.
      *
      * @return string

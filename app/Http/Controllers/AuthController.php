@@ -62,21 +62,31 @@ class AuthController extends Controller
             // Regenerate session to ensure it's fresh
             $request->session()->regenerate();
 
+            // Check if user wants to login as standard employee
+            $loginAsStandardEmployee = $request->has('is_standard_employee');
+
             // Log Auth::check() status
             \Log::info('Auth::check() status after login and session regeneration: ' . (Auth::check() ? 'true' : 'false'), ['user_id' => $user->getKey()]);
 
-            // Redirect based on user type
-            switch ($user->user_type) {
-                case 'employee':
-                    return redirect()->route('employee.dashboard');
-                case 'hr':
-                    return redirect()->route('hr.dashboard');
-                case 'department_admin':
-                    return redirect()->route('department.dashboard');
-                case 'mayor':
-                    return redirect()->route('mayor.dashboard');
-                default:
-                    return redirect()->route('employee.dashboard');
+            // Redirect based on user type or as standard employee if checkbox is checked
+            if ($loginAsStandardEmployee) {
+                // Store in session that user is logged in as standard employee
+                session(['login_as_standard_employee' => true]);
+                return redirect()->route('employee.dashboard');
+            } else {
+                // Normal redirect based on user type
+                switch ($user->user_type) {
+                    case 'employee':
+                        return redirect()->route('employee.dashboard');
+                    case 'hr':
+                        return redirect()->route('hr.dashboard');
+                    case 'department_admin':
+                        return redirect()->route('department.dashboard');
+                    case 'mayor':
+                        return redirect()->route('mayor.dashboard');
+                    default:
+                        return redirect()->route('employee.dashboard');
+                }
             }
         } catch (\Exception $e) {
             \Log::error('Login error', [

@@ -68,7 +68,7 @@
                 <div class="form-control">
                     <label class="label cursor-pointer">
                         <input type="checkbox" name="is_standard_employee" class="checkbox checkbox-primary" />
-                        <span class="label-text">Login as standard employee</span>
+                        <span class="label-text">Login as standard employee (restrict access to employee pages only)</span>
                     </label>
                 </div>
 

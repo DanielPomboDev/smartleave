@@ -33,15 +33,15 @@
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-blue-700">Total Earned:</span>
-                            <span class="font-medium text-blue-900">1.25 days</span>
+                            <span class="font-medium text-blue-900">{{ number_format($vacationSummary['earned'] ?? 0, 3) }} days</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-blue-700">Total Used:</span>
-                            <span class="font-medium text-blue-900">0.76 days</span>
+                            <span class="font-medium text-blue-900">{{ number_format($vacationSummary['used'] ?? 0, 3) }} days</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-blue-700">Current Balance:</span>
-                            <span class="font-medium text-blue-900">6.188 days</span>
+                            <span class="font-medium text-blue-900">{{ number_format($vacationSummary['balance'] ?? 0, 3) }} days</span>
                         </div>
                     </div>
                 </div>
@@ -50,15 +50,15 @@
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-green-700">Total Earned:</span>
-                            <span class="font-medium text-green-900">1.25 days</span>
+                            <span class="font-medium text-green-900">{{ number_format($sickSummary['earned'] ?? 0, 3) }} days</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-green-700">Total Used:</span>
-                            <span class="font-medium text-green-900">0 days</span>
+                            <span class="font-medium text-green-900">{{ number_format($sickSummary['used'] ?? 0, 3) }} days</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-green-700">Current Balance:</span>
-                            <span class="font-medium text-green-900">50.552 days</span>
+                            <span class="font-medium text-green-900">{{ number_format($sickSummary['balance'] ?? 0, 3) }} days</span>
                         </div>
                     </div>
                 </div>

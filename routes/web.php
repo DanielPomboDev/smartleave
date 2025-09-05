@@ -24,7 +24,20 @@ Route::get('/logout-get', [AuthController::class, 'logout'])->name('logout.get')
 // Dashboard and HR Manager routes - require authentication
 Route::middleware(['auth'])->group(function () {
     Route::get('/employee-dashboard', function () {
-        return view('employee_dashboard');
+        // Get the authenticated user
+        $user = Auth::user();
+        
+        // Get the latest leave records for this user
+        $latestLeaveRecord = $user->leaveRecords()
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->first();
+            
+        // If no record exists, use default values
+        $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
+        $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
+        
+        return view('employee_dashboard', compact('vacationBalance', 'sickBalance'));
     })->name('employee.dashboard');
 
     Route::get('/hr-dashboard', function () {
@@ -70,7 +83,24 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Employee routes - require authentication
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::class])->group(function () {
+    Route::get('/employee-dashboard', function () {
+        // Get the authenticated user
+        $user = Auth::user();
+        
+        // Get the latest leave records for this user
+        $latestLeaveRecord = $user->leaveRecords()
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->first();
+            
+        // If no record exists, use default values
+        $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
+        $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
+        
+        return view('employee_dashboard', compact('vacationBalance', 'sickBalance'));
+    })->name('employee.dashboard');
+
     Route::get('/request-leave', function () {
         return view('employee_request_leave');
     })->name('employee.request.leave');
@@ -88,10 +118,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
 
-    Route::put('/settings/notifications', function (Illuminate\Http\Request $request) {
-        // TODO: Implement notification settings update logic here
-        return back()->with('success', 'Notification settings updated successfully!');
-    })->name('settings.notifications.update');
+    Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
 });
 
 // Leave request routes

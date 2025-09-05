@@ -8,14 +8,14 @@
         <x-leave-credits-container>
             <x-leave-credit-card 
                 type="Vacation Leave" 
-                balance="15" 
+                :balance="$vacationBalance" 
                 icon="fas fa-umbrella-beach" 
                 bgColor="blue" 
             />
             
             <x-leave-credit-card 
                 type="Sick Leave" 
-                balance="12" 
+                :balance="$sickBalance" 
                 icon="fas fa-thermometer-half" 
                 bgColor="green" 
             />

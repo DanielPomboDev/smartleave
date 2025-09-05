@@ -155,6 +155,18 @@ class LeaveController extends Controller
         $leaveRequest->commutation = isset($validated['commutation']) && $validated['commutation'] == '1';
         $leaveRequest->status = LeaveRequest::STATUS_PENDING;
         $leaveRequest->save();
+        
+        // Notify department admins about the new leave request
+        $departmentAdmins = User::where('department_id', Auth::user()->department_id)
+            ->where('user_type', 'department_admin')
+            ->get();
+            
+        foreach ($departmentAdmins as $admin) {
+            // Only send notification if admin has enabled in-app notifications for leave requests
+            if ($admin->notificationPreferences && $admin->notificationPreferences->in_app_leave_requests) {
+                $admin->notify(new LeaveRequestStatusUpdated($leaveRequest, 'new_request'));
+            }
+        }
 
         // Redirect with success message - stay on the same page
         return redirect()->back()->with('success', 'Your leave request has been submitted successfully and is pending approval.');
@@ -339,11 +351,14 @@ class LeaveController extends Controller
                 DB::statement("UPDATE leave_requests SET status = ? WHERE id = ?", ['recommended', $id]);
             }
 
-            // Send notification to HR
+            // Send notification to HR if user has enabled notifications
             $hrUsers = User::where('user_type', 'hr')->get();
 
             foreach ($hrUsers as $hrUser) {
-                $hrUser->notify(new LeaveRequestStatusUpdated($leaveRequest));
+                // Only send notification if HR user has enabled in-app notifications
+                if ($hrUser->notificationPreferences && $hrUser->notificationPreferences->in_app_leave_requests) {
+                    $hrUser->notify(new LeaveRequestStatusUpdated($leaveRequest, 'recommended'));
+                }
             }
 
             return redirect()->route('department.dashboard')
@@ -423,8 +438,24 @@ class LeaveController extends Controller
                 : LeaveRequest::STATUS_DISAPPROVED;
             $leaveRequest->save();
 
-            // Send notification to the employee
-            $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+            // Send notification to the employee if they have enabled notifications
+            if ($leaveRequest->user->notificationPreferences && 
+                (($validated['approval'] === 'approve' && $leaveRequest->user->notificationPreferences->in_app_approvals) ||
+                 ($validated['approval'] === 'disapprove' && $leaveRequest->user->notificationPreferences->in_app_rejections))) {
+                $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+            }
+            
+            // Notify mayor if the request was approved by HR
+            if ($validated['approval'] === 'approve') {
+                $mayors = User::where('user_type', 'mayor')->get();
+                
+                foreach ($mayors as $mayor) {
+                    // Only send notification if mayor has enabled in-app notifications for leave requests
+                    if ($mayor->notificationPreferences && $mayor->notificationPreferences->in_app_leave_requests) {
+                        $mayor->notify(new LeaveRequestStatusUpdated($leaveRequest, 'hr_approved'));
+                    }
+                }
+            }
 
             return redirect()->route('hr.dashboard')
                 ->with('success', 'Leave request has been ' . ($validated['approval'] === 'approve' ? 'approved' : 'disapproved') . ' by HR.');
@@ -650,7 +681,52 @@ class LeaveController extends Controller
             : LeaveRequest::STATUS_DISAPPROVED;
         $leaveRequest->save();
 
-        $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+        // Send notification to the employee if they have enabled notifications
+        if ($leaveRequest->user->notificationPreferences && 
+            (($validated['decision'] === 'approve' && $leaveRequest->user->notificationPreferences->in_app_approvals) ||
+             ($validated['decision'] === 'disapprove' && $leaveRequest->user->notificationPreferences->in_app_rejections))) {
+            $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+        }
+        
+        // Notify all involved users about the final decision
+        $involvedUsers = [];
+        
+        // Add the employee who submitted the request
+        $involvedUsers[] = $leaveRequest->user;
+        
+        // Add department admin(s) who recommended the request
+        $departmentAdmins = User::whereIn('user_id', $leaveRequest->recommendations->pluck('department_admin_id'))->get();
+        $involvedUsers = array_merge($involvedUsers, $departmentAdmins->all());
+        
+        // Add HR manager(s) who approved the request
+        $hrManagers = User::whereIn('user_id', $leaveRequest->approvals->pluck('hr_manager_id'))->get();
+        $involvedUsers = array_merge($involvedUsers, $hrManagers->all());
+        
+        // Add mayor(s) if this is a mayor approval
+        if ($validated['decision'] === 'approve') {
+            $mayors = User::where('user_type', 'mayor')->get();
+            $involvedUsers = array_merge($involvedUsers, $mayors->all());
+        }
+        
+        // Remove duplicates and notify each user
+        $notifiedUserIds = [];
+        foreach ($involvedUsers as $user) {
+            // Skip if we've already notified this user or if they don't have notifications enabled
+            if (in_array($user->user_id, $notifiedUserIds) || 
+                !$user->notificationPreferences || 
+                !$user->notificationPreferences->in_app_approvals) {
+                continue;
+            }
+            
+            // Don't notify the employee again if we already did above
+            if ($user->user_id === $leaveRequest->user->user_id) {
+                continue;
+            }
+            
+            // Notify the user
+            $user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+            $notifiedUserIds[] = $user->user_id;
+        }
 
         return redirect()->route('mayor.leave.requests')->with('success', 'Final decision recorded.');
     }

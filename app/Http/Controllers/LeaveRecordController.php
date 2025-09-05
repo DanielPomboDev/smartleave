@@ -50,15 +50,29 @@ class LeaveRecordController extends Controller
         $employee = User::with('department')->findOrFail($userId);
         
         // Get leave records for this employee, ordered by year/month descending
-        $leaveRecords = LeaveRecord::where('user_id', $userId)
+        $allLeaveRecords = LeaveRecord::where('user_id', $userId)
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
-            ->get()
-            ->groupBy(function($item) {
-                return $item->year;
-            });
+            ->get();
         
-        return view('hr_leave_record', compact('employee', 'leaveRecords'));
+        $leaveRecords = $allLeaveRecords->groupBy(function($item) {
+            return $item->year;
+        });
+        
+        // Calculate summary totals
+        $vacationSummary = [
+            'earned' => $allLeaveRecords->sum('vacation_earned'),
+            'used' => $allLeaveRecords->sum('vacation_used'),
+            'balance' => $allLeaveRecords->first()->vacation_balance ?? 0 // Latest balance
+        ];
+        
+        $sickSummary = [
+            'earned' => $allLeaveRecords->sum('sick_earned'),
+            'used' => $allLeaveRecords->sum('sick_used'),
+            'balance' => $allLeaveRecords->first()->sick_balance ?? 0 // Latest balance
+        ];
+        
+        return view('hr_leave_record', compact('employee', 'leaveRecords', 'vacationSummary', 'sickSummary'));
     }
     
     /**
