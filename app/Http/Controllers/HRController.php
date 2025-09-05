@@ -100,10 +100,11 @@ class HRController extends Controller
     {
         // Validate the request
         $validated = $request->validate([
-            'user_id' => 'required|string|max:255|unique:users,user_id',
+            'user_id' => 'required|string|max:255|unique:users,user_id,NULL,user_id',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_initial' => 'nullable|string|max:1',
+            'email' => 'nullable|email|max:255',
             'department_id' => 'required|exists:departments,id',
             'position' => 'required|string|max:255',
             'start_date' => 'required|date',
@@ -117,6 +118,7 @@ class HRController extends Controller
         $user->first_name = $validated['first_name'];
         $user->last_name = $validated['last_name'];
         $user->middle_initial = $validated['middle_initial'];
+        $user->email = $validated['email'] ?? null;
         $user->department_id = $validated['department_id'];
         $user->position = $validated['position'];
         $user->start_date = $validated['start_date'];
@@ -146,6 +148,7 @@ class HRController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'middle_initial' => $user->middle_initial,
+                'email' => $user->email,
                 'department_id' => $user->department_id,
                 'position' => $user->position,
                 'user_type' => $user->user_type,
@@ -170,10 +173,11 @@ class HRController extends Controller
     {
         // Validate the request
         $validated = $request->validate([
-            'user_id' => 'required|string|max:255|unique:users,user_id,' . $id,
+            'user_id' => 'required|string|max:255|unique:users,user_id,' . $id . ',user_id',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_initial' => 'nullable|string|max:1',
+            'email' => 'nullable|email|max:255',
             'department_id' => 'required|exists:departments,id',
             'position' => 'required|string|max:255',
             'start_date' => 'required|date',
@@ -187,6 +191,7 @@ class HRController extends Controller
         $user->first_name = $validated['first_name'];
         $user->last_name = $validated['last_name'];
         $user->middle_initial = $validated['middle_initial'];
+        $user->email = $validated['email'] ?? null;
         $user->department_id = $validated['department_id'];
         $user->position = $validated['position'];
         $user->start_date = $validated['start_date'];

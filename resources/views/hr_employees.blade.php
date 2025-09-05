@@ -164,16 +164,23 @@
                     
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Position</span>
+                            <span class="label-text font-medium">Last Name</span>
                         </label>
-                        <input type="text" name="position" class="input input-bordered" placeholder="Position" required />
+                        <input type="text" name="last_name" class="input input-bordered" placeholder="Last Name" required />
                     </div>
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Last Name</span>
+                            <span class="label-text font-medium">Middle Initial</span>
                         </label>
-                        <input type="text" name="last_name" class="input input-bordered" placeholder="Last Name" required />
+                        <input type="text" name="middle_initial" class="input input-bordered" placeholder="Middle Initial" maxlength="1" />
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Position</span>
+                        </label>
+                        <input type="text" name="position" class="input input-bordered" placeholder="Position" required />
                     </div>
 
                     <div class="form-control">
@@ -190,9 +197,9 @@
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Middle Initial</span>
+                            <span class="label-text font-medium">Email</span>
                         </label>
-                        <input type="text" name="middle_initial" class="input input-bordered" placeholder="Middle Initial" maxlength="1" />
+                        <input type="email" name="email" class="input input-bordered" placeholder="Email Address" />
                     </div>
                     
                     <div class="form-control">
@@ -257,16 +264,23 @@
                     
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Position</span>
+                            <span class="label-text font-medium">Last Name</span>
                         </label>
-                        <input type="text" name="position" id="edit_position" class="input input-bordered" placeholder="Position" required />
+                        <input type="text" name="last_name" id="edit_last_name" class="input input-bordered" placeholder="Last Name" required />
                     </div>
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Last Name</span>
+                            <span class="label-text font-medium">Middle Initial</span>
                         </label>
-                        <input type="text" name="last_name" id="edit_last_name" class="input input-bordered" placeholder="Last Name" required />
+                        <input type="text" name="middle_initial" id="edit_middle_initial" class="input input-bordered" placeholder="Middle Initial" maxlength="1" />
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Position</span>
+                        </label>
+                        <input type="text" name="position" id="edit_position" class="input input-bordered" placeholder="Position" required />
                     </div>
 
                     <div class="form-control">
@@ -283,9 +297,9 @@
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Middle Initial</span>
+                            <span class="label-text font-medium">Email</span>
                         </label>
-                        <input type="text" name="middle_initial" id="edit_middle_initial" class="input input-bordered" placeholder="Middle Initial" maxlength="1" />
+                        <input type="email" name="email" id="edit_email" class="input input-bordered" placeholder="Email Address" />
                     </div>
                     
                     <div class="form-control">
@@ -400,6 +414,7 @@
                 document.getElementById('edit_first_name').value = data.first_name || '';
                 document.getElementById('edit_last_name').value = data.last_name || '';
                 document.getElementById('edit_middle_initial').value = data.middle_initial || '';
+                document.getElementById('edit_email').value = data.email || '';
                 document.getElementById('edit_department_id').value = data.department_id || '';
                 document.getElementById('edit_position').value = data.position || '';
                 document.getElementById('edit_user_type').value = data.user_type || '';

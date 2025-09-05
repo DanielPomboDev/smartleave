@@ -83,6 +83,11 @@
                                 <h3 class="text-sm font-medium text-gray-500">Salary</h3>
                                 <p class="text-lg font-semibold text-gray-800">₱{{ number_format(Auth::user()->salary ?? 0, 2) }}</p>
                             </div>
+                            
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Email Address</h3>
+                                <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->email ?? 'Not provided' }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -38,6 +38,7 @@ class User extends Authenticatable
         'first_name',
         'middle_initial',
         'last_name',
+        'email',
         'department_id',
         'office',
         'position',
