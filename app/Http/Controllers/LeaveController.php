@@ -51,6 +51,35 @@ class LeaveController extends Controller
     }
 
     /**
+     * Cancel a leave request.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function cancelRequest($id)
+    {
+        // Find the leave request
+        $leaveRequest = LeaveRequest::findOrFail($id);
+
+        // Check if the authenticated user owns this request
+        if ($leaveRequest->user_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'You are not authorized to cancel this leave request.');
+        }
+
+        // Check if the leave request can be cancelled
+        if (!$leaveRequest->isCancellable()) {
+            return redirect()->back()->with('error', 'This leave request cannot be cancelled at this stage.');
+        }
+
+        // Cancel the leave request
+        if ($leaveRequest->cancel()) {
+            return redirect()->back()->with('success', 'Leave request has been successfully cancelled.');
+        }
+
+        return redirect()->back()->with('error', 'Failed to cancel the leave request. Please try again.');
+    }
+
+    /**
      * Store a newly created leave request.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -202,7 +231,10 @@ class LeaveController extends Controller
             $statusMap = [
                 'approved' => LeaveRequest::STATUS_APPROVED,
                 'pending' => LeaveRequest::STATUS_PENDING,
-                'disapproved' => LeaveRequest::STATUS_DISAPPROVED
+                'disapproved' => LeaveRequest::STATUS_DISAPPROVED,
+                'recommended' => LeaveRequest::STATUS_RECOMMENDED,
+                'hr_approved' => LeaveRequest::STATUS_HR_APPROVED,
+                'cancelled' => LeaveRequest::STATUS_CANCELLED
             ];
             $query->where('status', $statusMap[$status]);
         }

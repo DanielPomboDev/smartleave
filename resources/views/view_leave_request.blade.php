@@ -16,13 +16,13 @@
                     <div class="avatar mr-4">
                         <div class="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
                             <span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">
-                                JD
+                                {{ substr($leaveRequest->user->first_name, 0, 1) }}{{ substr($leaveRequest->user->last_name, 0, 1) }}
                             </span>
                         </div>
                     </div>
                     <div>
-                        <h4 class="text-xl font-bold text-gray-800">Juan Dela Cruz</h4>
-                        <p class="text-gray-600">IT Department • IT Specialist</p>
+                        <h4 class="text-xl font-bold text-gray-800">{{ $leaveRequest->user->full_name }}</h4>
+                        <p class="text-gray-600">{{ $leaveRequest->user->department->name ?? 'Department' }} • {{ $leaveRequest->user->position }}</p>
                     </div>
                 </div>
 
@@ -30,19 +30,25 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Type of Leave</h5>
-                        <p class="font-medium text-gray-800 text-lg">Vacation Leave</p>
+                        <p class="font-medium text-gray-800 text-lg">{{ App\Models\LeaveRequest::LEAVE_TYPES[$leaveRequest->leave_type] ?? $leaveRequest->leave_type }}</p>
                     </div>
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Applied On</h5>
-                        <p class="font-medium text-gray-800 text-lg">May 25, 2025</p>
+                        <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->created_at->format('F d, Y') }}</p>
                     </div>
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Inclusive Dates</h5>
-                        <p class="font-medium text-gray-800 text-lg">May 30, 2025 - June 1, 2025</p>
+                        <p class="font-medium text-gray-800 text-lg">
+                            @if($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
+                                {{ $leaveRequest->start_date->format('F d, Y') }}
+                            @else
+                                {{ $leaveRequest->start_date->format('F d') }} - {{ $leaveRequest->end_date->format('F d, Y') }}
+                            @endif
+                        </p>
                     </div>
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Number of Working Days</h5>
-                        <p class="font-medium text-gray-800 text-lg">3 days</p>
+                        <p class="font-medium text-gray-800 text-lg">{{ $leaveRequest->number_of_days }} day(s)</p>
                     </div>
                 </div>
 
@@ -50,11 +56,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Where Leave Will Be Spent</h5>
-                        <p class="font-medium text-gray-800">Within the Philippines</p>
+                        <p class="font-medium text-gray-800">{{ $leaveRequest->where_spent }}</p>
                     </div>
                     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
                         <h5 class="font-semibold text-blue-600 mb-3">Commutation</h5>
-                        <p class="font-medium text-gray-800">Requested</p>
+                        <p class="font-medium text-gray-800">{{ $leaveRequest->commutation ? 'Requested' : 'Not Requested' }}</p>
                     </div>
                 </div>
 
@@ -72,18 +78,40 @@
                         <span class="badge badge-success">Approved</span>
                     @elseif($status === App\Models\LeaveRequest::STATUS_DISAPPROVED)
                         <span class="badge badge-error">Denied</span>
+                    @elseif($status === App\Models\LeaveRequest::STATUS_CANCELLED)
+                        <span class="badge badge-neutral">Cancelled</span>
                     @else
                         <span class="badge">—</span>
                     @endif
                 </div>
 
-                <!-- Cancel Button (UI only) -->
+                <!-- Cancel Button -->
+                @if($leaveRequest->isCancellable())
                 <div class="flex justify-end">
-                    <button class="btn btn-error">
+                    <form action="{{ route('leave.cancel', $leaveRequest->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this leave request?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-error">
+                            <i class="fi-rr-cross mr-2"></i>
+                            Cancel Leave Request
+                        </button>
+                    </form>
+                </div>
+                @elseif($leaveRequest->isFullyApproved())
+                <div class="flex justify-end">
+                    <button class="btn btn-disabled" disabled>
                         <i class="fi-rr-cross mr-2"></i>
-                        Cancel Leave Request
+                        Cancel Leave Request (Approved)
                     </button>
                 </div>
+                @elseif($leaveRequest->isCancelled())
+                <div class="flex justify-end">
+                    <button class="btn btn-disabled" disabled>
+                        <i class="fi-rr-cross mr-2"></i>
+                        Leave Request Cancelled
+                    </button>
+                </div>
+                @endif
             </div>
         </div>
     </div>

@@ -37,7 +37,13 @@ Route::middleware(['auth'])->group(function () {
         $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
         $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
         
-        return view('employee_dashboard', compact('vacationBalance', 'sickBalance'));
+        // Get recent leave requests for this user
+        $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->user_id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return view('employee_dashboard', compact('vacationBalance', 'sickBalance', 'leaveRequests'));
     })->name('employee.dashboard');
 
     Route::get('/hr-dashboard', function () {
@@ -99,7 +105,13 @@ Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::clas
         $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
         $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
         
-        return view('employee_dashboard', compact('vacationBalance', 'sickBalance'));
+        // Get recent leave requests for this user
+        $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->user_id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return view('employee_dashboard', compact('vacationBalance', 'sickBalance', 'leaveRequests'));
     })->name('employee.dashboard');
 
     Route::get('/request-leave', function () {
@@ -133,6 +145,7 @@ Route::post('/leave', [LeaveController::class, 'store'])->name('leave.store');
 Route::put('/leave/{id}', [LeaveController::class, 'update'])->name('leave.update');
 Route::delete('/leave/{id}', [LeaveController::class, 'destroy'])->name('leave.destroy');
 Route::post('/leave/{id}/process', [LeaveController::class, 'processApproval'])->name('leave.process');
+Route::delete('/leave/{id}/cancel', [LeaveController::class, 'cancelRequest'])->name('leave.cancel');
 
 // HR Manager routes - require authentication
 Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {

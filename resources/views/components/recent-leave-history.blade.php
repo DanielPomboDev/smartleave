@@ -48,6 +48,8 @@
                                     <span class="badge badge-success">Approved</span>
                                 @elseif($leaveRequest->isDisapproved())
                                     <span class="badge badge-error">Denied</span>
+                                @elseif($leaveRequest->isCancelled())
+                                    <span class="badge badge-neutral">Cancelled</span>
                                 @else
                                     <span class="badge">—</span>
                                 @endif

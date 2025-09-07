@@ -16,6 +16,7 @@ class LeaveRequest extends Model
     public const STATUS_HR_APPROVED = 'hr_approved';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_DISAPPROVED = 'disapproved';
+    public const STATUS_CANCELLED = 'cancelled';
 
     /**
      * The attributes that are mass assignable.
@@ -75,6 +76,7 @@ class LeaveRequest extends Model
         self::STATUS_HR_APPROVED => 'HR Approved',
         self::STATUS_APPROVED => 'Approved',
         self::STATUS_DISAPPROVED => 'Disapproved',
+        self::STATUS_CANCELLED => 'Cancelled',
     ];
 
     /**
@@ -133,5 +135,46 @@ class LeaveRequest extends Model
     public function isRecommended(): bool
     {
         return $this->status === self::STATUS_RECOMMENDED;
+    }
+
+    /**
+     * Check if the leave request can be cancelled by the employee.
+     */
+    public function isCancellable(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_PENDING,
+            self::STATUS_RECOMMENDED,
+            self::STATUS_HR_APPROVED
+        ]);
+    }
+
+    /**
+     * Check if the leave request is fully approved (cannot be cancelled by employee).
+     */
+    public function isFullyApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    /**
+     * Check if the leave request is cancelled.
+     */
+    public function isCancelled(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED;
+    }
+
+    /**
+     * Cancel the leave request.
+     */
+    public function cancel(): bool
+    {
+        if (!$this->isCancellable()) {
+            return false;
+        }
+
+        $this->status = self::STATUS_CANCELLED;
+        return $this->save();
     }
 }
