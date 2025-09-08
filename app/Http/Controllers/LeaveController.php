@@ -715,6 +715,11 @@ class LeaveController extends Controller
             : LeaveRequest::STATUS_DISAPPROVED;
         $leaveRequest->save();
 
+        // If the leave request is approved by the mayor, deduct leave credits and record the leave
+        if ($validated['decision'] === 'approve') {
+            $this->deductLeaveCredits($leaveRequest);
+        }
+
         // Send notification to the employee if they have enabled notifications
         if ($leaveRequest->user->notificationPreferences && 
             (($validated['decision'] === 'approve' && $leaveRequest->user->notificationPreferences->in_app_approvals) ||
@@ -763,5 +768,98 @@ class LeaveController extends Controller
         }
 
         return redirect()->route('mayor.leave.requests')->with('success', 'Final decision recorded.');
+    }
+
+    /**
+     * Deduct leave credits from the employee's record and record the leave
+     *
+     * @param LeaveRequest $leaveRequest
+     * @return void
+     */
+    private function deductLeaveCredits(LeaveRequest $leaveRequest)
+    {
+        // Get the current month and year
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        // Get the most recent leave record for this user to determine their current balances
+        $latestLeaveRecord = \App\Models\LeaveRecord::where('user_id', $leaveRequest->user_id)
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->first();
+
+        // Calculate previous balances
+        $previousVacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 0;
+        $previousSickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 0;
+
+        // Check if a leave record already exists for the current month
+        $existingLeaveRecord = \App\Models\LeaveRecord::where([
+            'user_id' => $leaveRequest->user_id,
+            'month' => $currentMonth,
+            'year' => $currentYear
+        ])->first();
+
+        if ($existingLeaveRecord) {
+            // If a record already exists, use it
+            $leaveRecord = $existingLeaveRecord;
+        } else {
+            // If no record exists, create a new one
+            $leaveRecord = new \App\Models\LeaveRecord([
+                'user_id' => $leaveRequest->user_id,
+                'month' => $currentMonth,
+                'year' => $currentYear,
+                'vacation_earned' => 1.25,
+                'sick_earned' => 1.25,
+                'vacation_used' => 0,
+                'sick_used' => 0,
+                'vacation_balance' => $previousVacationBalance + 1.25,
+                'sick_balance' => $previousSickBalance + 1.25,
+                'undertime_hours' => 0,
+                'vacation_entries' => [],
+                'sick_entries' => []
+            ]);
+            $leaveRecord->save();
+        }
+
+        // Initialize vacation_entries and sick_entries as arrays if they are null
+        $vacationEntries = $leaveRecord->vacation_entries ?? [];
+        $sickEntries = $leaveRecord->sick_entries ?? [];
+
+        // Format the leave entry
+        $leaveEntry = [
+            'start_date' => $leaveRequest->start_date->format('Y-m-d'),
+            'end_date' => $leaveRequest->end_date->format('Y-m-d'),
+            'days' => $leaveRequest->number_of_days,
+            'type' => $leaveRequest->leave_type,
+            'subtype' => $leaveRequest->subtype
+        ];
+
+        // Store the current used values to calculate the actual deduction
+        $previousVacationUsed = $leaveRecord->vacation_used;
+        $previousSickUsed = $leaveRecord->sick_used;
+
+        // Deduct the appropriate leave credits based on leave type
+        if ($leaveRequest->leave_type === 'vacation') {
+            $leaveRecord->vacation_used += $leaveRequest->number_of_days;
+            $vacationEntries[] = $leaveEntry;
+        } elseif ($leaveRequest->leave_type === 'sick') {
+            $leaveRecord->sick_used += $leaveRequest->number_of_days;
+            $sickEntries[] = $leaveEntry;
+        }
+
+        // Update the entries arrays
+        $leaveRecord->vacation_entries = $vacationEntries;
+        $leaveRecord->sick_entries = $sickEntries;
+
+        // Calculate the actual deduction that occurred
+        $vacationDeduction = $leaveRecord->vacation_used - $previousVacationUsed;
+        $sickDeduction = $leaveRecord->sick_used - $previousSickUsed;
+
+        // Update balances based on the actual deduction
+        $leaveRecord->vacation_balance -= $vacationDeduction;
+        $leaveRecord->sick_balance -= $sickDeduction;
+
+        // Save the updated leave record
+        $leaveRecord->save();
     }
 }
