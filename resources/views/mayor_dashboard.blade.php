@@ -126,6 +126,8 @@
                                         <span class="badge badge-success">Approved</span>
                                     @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_DISAPPROVED)
                                         <span class="badge badge-error">Rejected</span>
+                                    @elseif($leaveRequest->status === App\Models\LeaveRequest::STATUS_CANCELLED)
+                                        <span class="badge badge-neutral">Cancelled</span>
                                     @else
                                         <span class="badge">—</span>
                                     @endif

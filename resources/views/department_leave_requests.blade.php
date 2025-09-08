@@ -26,6 +26,7 @@ use App\Models\LeaveRequest;
                         <option value="hr_approved" {{ $filters['status'] === 'hr_approved' ? 'selected' : '' }}>HR Approved</option>
                         <option value="approved" {{ $filters['status'] === 'approved' ? 'selected' : '' }}>Approved</option>
                         <option value="rejected" {{ $filters['status'] === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        <option value="cancelled" {{ $filters['status'] === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
                 </div>
                 
@@ -162,6 +163,8 @@ use App\Models\LeaveRequest;
                                         <span class="badge badge-success">Approved</span>
                                     @elseif($leaveRequest->isDisapproved())
                                         <span class="badge badge-error">Rejected</span>
+                                    @elseif($leaveRequest->isCancelled())
+                                        <span class="badge badge-neutral">Cancelled</span>
                                     @else
                                         <span class="badge badge-ghost">{{ ucfirst($leaveRequest->status) }}</span>
                                     @endif

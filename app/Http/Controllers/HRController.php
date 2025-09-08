@@ -70,9 +70,9 @@ class HRController extends Controller
      */
     public function dashboard()
     {
-        // HR queue: show recommended, HR-approved, and mayor-approved requests
+        // HR queue: show recommended, HR-approved, mayor-approved, and cancelled requests
         $hrQueue = LeaveRequest::with(['user.department'])
-            ->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED])
+            ->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED, LeaveRequest::STATUS_CANCELLED])
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
@@ -339,9 +339,20 @@ class HRController extends Controller
 
         // Apply status filter - by default show recommended and HR approved like dashboard
         if ($status === 'all') {
-            $query->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED]);
+            $query->whereIn('status', [LeaveRequest::STATUS_RECOMMENDED, LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_CANCELLED]);
         } else if ($status !== 'all') {
-            $query->where('status', $status);
+            $statusMap = [
+                LeaveRequest::STATUS_PENDING => LeaveRequest::STATUS_PENDING,
+                LeaveRequest::STATUS_RECOMMENDED => LeaveRequest::STATUS_RECOMMENDED,
+                LeaveRequest::STATUS_HR_APPROVED => LeaveRequest::STATUS_HR_APPROVED,
+                LeaveRequest::STATUS_APPROVED => LeaveRequest::STATUS_APPROVED,
+                LeaveRequest::STATUS_DISAPPROVED => LeaveRequest::STATUS_DISAPPROVED,
+                LeaveRequest::STATUS_CANCELLED => LeaveRequest::STATUS_CANCELLED
+            ];
+            
+            if (isset($statusMap[$status])) {
+                $query->where('status', $statusMap[$status]);
+            }
         }
 
         // Apply department filter

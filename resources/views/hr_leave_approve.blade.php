@@ -111,10 +111,17 @@
                                 <i class="fi-rr-arrow-right ml-2"></i>
                             </button>
                         @else
-                            <button type="button" class="btn" disabled>
-                                Next
-                                <i class="fi-rr-lock ml-2"></i>
-                            </button>
+                            @if($leaveRequest->isCancelled())
+                                <button type="button" class="btn" disabled>
+                                    Cancelled
+                                    <i class="fi-rr-ban ml-2"></i>
+                                </button>
+                            @else
+                                <button type="button" class="btn" disabled>
+                                    Next
+                                    <i class="fi-rr-lock ml-2"></i>
+                                </button>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -202,10 +209,17 @@
                                 <i class="fi-rr-arrow-right ml-2"></i>
                             </button>
                         @else
-                            <button type="button" class="btn" disabled>
-                                Next
-                                <i class="fi-rr-lock ml-2"></i>
-                            </button>
+                            @if($leaveRequest->isCancelled())
+                                <button type="button" class="btn" disabled>
+                                    Cancelled
+                                    <i class="fi-rr-ban ml-2"></i>
+                                </button>
+                            @else
+                                <button type="button" class="btn" disabled>
+                                    Next
+                                    <i class="fi-rr-lock ml-2"></i>
+                                </button>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -306,9 +320,23 @@
                             </div>
                             <!-- Submit Button -->
                             <div class="flex justify-end mt-6">
-                                <button type="submit" class="btn bg-blue-500 hover:bg-blue-600 text-white">
-                                    Submit
-                                </button>
+                                @if($leaveRequest->status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
+                                    <button type="submit" class="btn bg-blue-500 hover:bg-blue-600 text-white">
+                                        Submit
+                                    </button>
+                                @else
+                                    @if($leaveRequest->isCancelled())
+                                        <button type="button" class="btn" disabled>
+                                            Cancelled
+                                            <i class="fi-rr-ban ml-2"></i>
+                                        </button>
+                                    @else
+                                        <button type="button" class="btn" disabled>
+                                            Submit
+                                            <i class="fi-rr-lock ml-2"></i>
+                                        </button>
+                                    @endif
+                                @endif
                             </div>
                         </div>
                     </div>

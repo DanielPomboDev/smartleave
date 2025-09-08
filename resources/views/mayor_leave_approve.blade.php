@@ -153,6 +153,16 @@
                         Reject
                     </button>
                 </form>
+            @elseif($leaveRequest->isCancelled())
+                <div class="alert alert-warning mt-6">
+                    <div class="flex items-center">
+                        <i class="fi-rr-info text-2xl mr-3"></i>
+                        <div>
+                            <h3 class="font-bold">Leave Request Cancelled</h3>
+                            <p>This leave request has been cancelled by the employee and cannot be processed further.</p>
+                        </div>
+                    </div>
+                </div>
             @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_APPROVED)
                 <div class="alert alert-success mt-6">
                     <div class="flex items-center">

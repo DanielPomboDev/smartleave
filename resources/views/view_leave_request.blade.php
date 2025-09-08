@@ -88,14 +88,10 @@
                 <!-- Cancel Button -->
                 @if($leaveRequest->isCancellable())
                 <div class="flex justify-end">
-                    <form action="{{ route('leave.cancel', $leaveRequest->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this leave request?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-error">
-                            <i class="fi-rr-cross mr-2"></i>
-                            Cancel Leave Request
-                        </button>
-                    </form>
+                    <button onclick="document.getElementById('cancelModal').showModal()" class="btn btn-error">
+                        <i class="fi-rr-cross mr-2"></i>
+                        Cancel Leave Request
+                    </button>
                 </div>
                 @elseif($leaveRequest->isFullyApproved())
                 <div class="flex justify-end">
@@ -115,4 +111,31 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<dialog id="cancelModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-error">
+            <i class="fi-rr-exclamation mr-2"></i>
+            Confirm Cancellation
+        </h3>
+        <p class="py-4">
+            Are you sure you want to cancel this leave request? This action cannot be undone.
+        </p>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-ghost">Cancel</button>
+            </form>
+            <form action="{{ route('leave.cancel', $leaveRequest->id) }}" method="POST">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-error">
+                    <i class="fi-rr-cross mr-2"></i>
+                    Yes, Cancel Request
+                </button>
+            </form>
+        </div>
+    </div>
+</dialog>
 </x-layouts.layout> 

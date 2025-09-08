@@ -277,7 +277,7 @@ class LeaveController extends Controller
         // Get the authenticated user's department
         $departmentId = Auth::user()->department_id;
 
-        // Get recent leave requests from users in the same department
+        // Get recent leave requests from users in the same department (including cancelled requests)
         $leaveRequests = LeaveRequest::with('user')
             ->whereHas('user', function ($query) use ($departmentId) {
                 $query->where('department_id', $departmentId);
@@ -538,7 +538,8 @@ class LeaveController extends Controller
                 'recommended' => LeaveRequest::STATUS_RECOMMENDED,
                 'hr_approved' => LeaveRequest::STATUS_HR_APPROVED,
                 'approved' => LeaveRequest::STATUS_APPROVED,
-                'rejected' => LeaveRequest::STATUS_DISAPPROVED
+                'rejected' => LeaveRequest::STATUS_DISAPPROVED,
+                'cancelled' => LeaveRequest::STATUS_CANCELLED
             ];
             $query->where('status', $statusMap[$status]);
         }
@@ -585,9 +586,9 @@ class LeaveController extends Controller
      */
     public function mayorDashboard()
     {
-        // Get recent leave requests eligible for mayor (HR approved) and already approved by mayor
+        // Get recent leave requests eligible for mayor (HR approved) and already approved by mayor (including cancelled)
         $leaveRequests = LeaveRequest::with('user')
-            ->whereIn('status', [LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED])
+            ->whereIn('status', [LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED, LeaveRequest::STATUS_CANCELLED])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -627,7 +628,7 @@ class LeaveController extends Controller
 
         // Start building the query (for all users)
         $query = LeaveRequest::with(['user', 'user.department'])
-            ->whereIn('status', [LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED])
+            ->whereIn('status', [LeaveRequest::STATUS_HR_APPROVED, LeaveRequest::STATUS_APPROVED, LeaveRequest::STATUS_CANCELLED])
             ->orderBy('created_at', 'desc');
 
         // Apply filters
@@ -636,7 +637,8 @@ class LeaveController extends Controller
                 'pending' => LeaveRequest::STATUS_PENDING,
                 'hr_approved' => LeaveRequest::STATUS_HR_APPROVED,
                 'approved' => LeaveRequest::STATUS_APPROVED,
-                'rejected' => LeaveRequest::STATUS_DISAPPROVED
+                'rejected' => LeaveRequest::STATUS_DISAPPROVED,
+                'cancelled' => LeaveRequest::STATUS_CANCELLED
             ];
             $query->where('status', $statusMap[$status]);
         }

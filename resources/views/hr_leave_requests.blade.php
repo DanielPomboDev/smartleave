@@ -22,6 +22,7 @@
                         <option value="{{ \App\Models\LeaveRequest::STATUS_HR_APPROVED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_HR_APPROVED) ? 'selected' : '' }}>HR Approved</option>
                         <option value="{{ \App\Models\LeaveRequest::STATUS_APPROVED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_APPROVED) ? 'selected' : '' }}>Approved</option>
                         <option value="{{ \App\Models\LeaveRequest::STATUS_DISAPPROVED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_DISAPPROVED) ? 'selected' : '' }}>Rejected</option>
+                        <option value="{{ \App\Models\LeaveRequest::STATUS_CANCELLED }}" {{ (isset($filters['status']) && $filters['status'] === \App\Models\LeaveRequest::STATUS_CANCELLED) ? 'selected' : '' }}>Cancelled</option>
                     </select>
                 </div>
                 
@@ -115,6 +116,8 @@
                                         <span class="badge badge-success">Approved</span>
                                     @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_DISAPPROVED)
                                         <span class="badge badge-error">Rejected</span>
+                                    @elseif($leaveRequest->status === \App\Models\LeaveRequest::STATUS_CANCELLED)
+                                        <span class="badge badge-neutral">Cancelled</span>
                                     @else
                                         <span class="badge">—</span>
                                     @endif

@@ -36,7 +36,11 @@ use App\Models\LeaveRequest;
                     <div class="flex items-center">
                         <i class="fi-rr-info text-xl mr-2"></i>
                         <span>
-                            This request is already {{ $leaveRequest->status === LeaveRequest::STATUS_RECOMMENDED ? 'recommended' : ($leaveRequest->isHrApproved() ? 'HR approved' : ($leaveRequest->isApproved() ? 'approved' : ($leaveRequest->isDisapproved() ? 'disapproved' : 'processed'))) }}. You can view details but cannot submit another recommendation.
+                            @if($leaveRequest->isCancelled())
+                                This request has been cancelled by the employee and cannot be processed further.
+                            @else
+                                This request is already {{ $leaveRequest->status === LeaveRequest::STATUS_RECOMMENDED ? 'recommended' : ($leaveRequest->isHrApproved() ? 'HR approved' : ($leaveRequest->isApproved() ? 'approved' : ($leaveRequest->isDisapproved() ? 'disapproved' : 'processed'))) }}. You can view details but cannot submit another recommendation.
+                            @endif
                         </span>
                     </div>
                 </div>
