@@ -191,10 +191,7 @@ class LeaveController extends Controller
             ->get();
             
         foreach ($departmentAdmins as $admin) {
-            // Only send notification if admin has enabled in-app notifications for leave requests
-            if ($admin->notificationPreferences && $admin->notificationPreferences->in_app_leave_requests) {
-                $admin->notify(new LeaveRequestStatusUpdated($leaveRequest, 'new_request'));
-            }
+            $admin->notify(new LeaveRequestStatusUpdated($leaveRequest, 'new_request'));
         }
 
         // Redirect with success message - stay on the same page

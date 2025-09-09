@@ -23,6 +23,11 @@ Route::get('/logout-get', [AuthController::class, 'logout'])->name('logout.get')
 
 // Dashboard and HR Manager routes - require authentication
 Route::middleware(['auth'])->group(function () {
+    // Notification routes
+    Route::get('/notifications/unread', [\App\Http\Controllers\NotificationController::class, 'getUnreadNotifications'])->name('notifications.unread');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    
     Route::get('/employee-dashboard', function () {
         // Get the authenticated user
         $user = Auth::user();

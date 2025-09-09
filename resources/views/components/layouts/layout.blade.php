@@ -96,71 +96,15 @@
                         <div class="relative">
                             <button id="notifBell" class="text-gray-600 hover:text-blue-500 focus:outline-none" type="button">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                                <span id="notifCount" class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full hidden"></span>
                             </button>
                             <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-[9999]" style="min-width: 320px; background: #fff !important;" onclick="event.stopPropagation();">
                                 <div class="p-4 border-b border-gray-100 font-bold text-gray-700">Notifications</div>
-                                <ul class="max-h-64 overflow-y-auto">
-                                    @if(Auth::user()->user_type === 'employee')
-                                        <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
-                                            <div class="flex-shrink-0 mt-1">
-                                                <i class="fas fa-check-circle text-green-500 text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">Vacation Leave</span> (May 10-12, 2024) was <span class="text-green-600 font-semibold">approved</span> by HR.</div>
-                                                <div class="text-xs text-gray-400 mt-1">2 hours ago</div>
-                                            </div>
-                                        </li>
-                                        <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
-                                            <div class="flex-shrink-0 mt-1">
-                                                <i class="fas fa-times-circle text-red-500 text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">Sick Leave</span> (Apr 20-21, 2024) was <span class="text-red-600 font-semibold">rejected</span> by Department Admin.</div>
-                                                <div class="text-xs text-gray-400 mt-1">1 day ago</div>
-                                            </div>
-                                        </li>
-                                        <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
-                                            <div class="flex-shrink-0 mt-1">
-                                                <i class="fas fa-hourglass-end text-yellow-500 text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">Vacation Leave</span> (Mar 5, 2024) is <span class="text-yellow-600 font-semibold">pending</span> HR approval.</div>
-                                                <div class="text-xs text-gray-400 mt-1">3 days ago</div>
-                                            </div>
-                                        </li>
-                                    @else
-                                        <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
-                                            <div class="flex-shrink-0 mt-1 flex items-center space-x-1">
-                                                <i class="fas fa-hourglass-half text-yellow-500 text-lg"></i>
-                                                <i class="fi-rr-envelope text-blue-500 text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm text-gray-800">New leave request from <span class="font-semibold">Daniel Pombo</span> for <span class="font-semibold">Vacation Leave</span>.</div>
-                                                <div class="text-xs text-gray-400 mt-1">2 minutes ago</div>
-                                            </div>
-                                        </li>
-                                        <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
-                                            <div class="flex-shrink-0 mt-1 flex items-center space-x-1">
-                                                <i class="fas fa-hourglass-half text-yellow-500 text-lg"></i>
-                                                <i class="fi-rr-envelope text-blue-500 text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm text-gray-800">New leave request from <span class="font-semibold">Jane Smith</span> for <span class="font-semibold">Sick Leave</span>.</div>
-                                                <div class="text-xs text-gray-400 mt-1">10 minutes ago</div>
-                                            </div>
-                                        </li>
-                                        <li class="px-4 py-3 hover:bg-gray-50 flex items-start space-x-3">
-                                            <div class="flex-shrink-0 mt-1 flex items-center space-x-1">
-                                                <i class="fas fa-hourglass-half text-yellow-500 text-lg"></i>
-                                                <i class="fi-rr-envelope text-blue-500 text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm text-gray-800">New leave request from <span class="font-semibold">Robert Johnson</span> for <span class="font-semibold">Emergency Leave</span>.</div>
-                                                <div class="text-xs text-gray-400 mt-1">30 minutes ago</div>
-                                            </div>
-                                        </li>
-                                    @endif
+                                <ul id="notifList" class="max-h-64 overflow-y-auto">
+                                    <!-- Notifications will be loaded here via AJAX -->
+                                    <li class="px-4 py-3 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading notifications...
+                                    </li>
                                 </ul>
                                 <div class="p-2 text-center border-t border-gray-100">
                                     <a href="#" class="text-blue-500 text-sm hover:underline">View all notifications</a>
@@ -225,6 +169,11 @@
                     e.stopPropagation();
                     console.log('Bell clicked!');
                     dropdown.classList.toggle('hidden');
+                    
+                    // Load notifications when dropdown is opened
+                    if (!dropdown.classList.contains('hidden')) {
+                        loadNotifications();
+                    }
                 });
                 // Prevent closing when clicking inside the dropdown
                 dropdown.addEventListener('click', function(e) {
@@ -237,6 +186,119 @@
                 });
             }
         });
+        
+        // Function to load notifications via AJAX
+        function loadNotifications() {
+            fetch('{{ route("notifications.unread") }}')
+                .then(response => response.json())
+                .then(notifications => {
+                    const notifList = document.getElementById('notifList');
+                    notifList.innerHTML = '';
+                    
+                    if (notifications.length === 0) {
+                        notifList.innerHTML = '<li class="px-4 py-3 text-center text-gray-500">No new notifications</li>';
+                        document.getElementById('notifCount').classList.add('hidden');
+                        return;
+                    }
+                    
+                    // Show notification count
+                    document.getElementById('notifCount').classList.remove('hidden');
+                    
+                    // Add notifications to the list
+                    notifications.forEach(notification => {
+                        const data = JSON.parse(notification.data);
+                        const notifItem = document.createElement('li');
+                        notifItem.className = 'px-4 py-3 hover:bg-gray-50 flex items-start space-x-3';
+                        notifItem.dataset.id = notification.id;
+                        
+                        let iconHtml = '';
+                        let message = '';
+                        
+                        // Determine icon and message based on notification type
+                        if (data.status === 'new') {
+                            iconHtml = '<i class="fas fa-hourglass-half text-yellow-500 text-lg"></i>';
+                            message = `<div class="text-sm text-gray-800">New leave request from <span class="font-semibold">${data.employee_name}</span> for <span class="font-semibold">${data.leave_type}</span>.</div>`;
+                        } else if (data.status === 'approved') {
+                            iconHtml = '<i class="fas fa-check-circle text-green-500 text-lg"></i>';
+                            message = `<div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">${data.leave_type}</span> was <span class="text-green-600 font-semibold">approved</span>.</div>`;
+                        } else if (data.status === 'disapproved') {
+                            iconHtml = '<i class="fas fa-times-circle text-red-500 text-lg"></i>';
+                            message = `<div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">${data.leave_type}</span> was <span class="text-red-600 font-semibold">rejected</span>.</div>`;
+                        } else {
+                            iconHtml = '<i class="fas fa-info-circle text-blue-500 text-lg"></i>';
+                            message = `<div class="text-sm text-gray-800">${data.message}</div>`;
+                        }
+                        
+                        notifItem.innerHTML = `
+                            <div class="flex-shrink-0 mt-1 flex items-center space-x-1">
+                                ${iconHtml}
+                            </div>
+                            <div>
+                                ${message}
+                                <div class="text-xs text-gray-400 mt-1">${timeAgo(new Date(notification.created_at))}</div>
+                            </div>
+                        `;
+                        
+                        notifList.appendChild(notifItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    const notifList = document.getElementById('notifList');
+                    notifList.innerHTML = '<li class="px-4 py-3 text-center text-red-500">Error loading notifications</li>';
+                });
+        }
+        
+        // Helper function to format time ago
+        function timeAgo(dateString) {
+            // Parse MySQL datetime format: "YYYY-MM-DD HH:MM:SS"
+            let date;
+            if (typeof dateString === 'string' && dateString.includes(' ')) {
+                const parts = dateString.split(' ');
+                const datePart = parts[0].split('-');
+                const timePart = parts[1].split(':');
+                date = new Date(
+                    parseInt(datePart[0]), 
+                    parseInt(datePart[1]) - 1, // Month is 0-indexed in JavaScript
+                    parseInt(datePart[2]), 
+                    parseInt(timePart[0]), 
+                    parseInt(timePart[1]), 
+                    parseInt(timePart[2]) || 0
+                );
+            } else {
+                // Fallback to regular date parsing
+                date = new Date(dateString);
+            }
+            
+            // If date is invalid, return a default
+            if (isNaN(date.getTime())) {
+                return 'Just now';
+            }
+            
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) {
+                return Math.floor(interval) + " years ago";
+            }
+            interval = seconds / 2592000;
+            if (interval > 1) {
+                return Math.floor(interval) + " months ago";
+            }
+            interval = seconds / 86400;
+            if (interval > 1) {
+                return Math.floor(interval) + " days ago";
+            }
+            interval = seconds / 3600;
+            if (interval > 1) {
+                return Math.floor(interval) + " hours ago";
+            }
+            interval = seconds / 60;
+            if (interval > 1) {
+                return Math.floor(interval) + " minutes ago";
+            }
+            return Math.floor(seconds) + " seconds ago";
+        }
     </script>
     @stack('scripts')
 </body>
