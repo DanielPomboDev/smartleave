@@ -63,13 +63,13 @@ class LeaveRecordController extends Controller
         $vacationSummary = [
             'earned' => $allLeaveRecords->sum('vacation_earned'),
             'used' => $allLeaveRecords->sum('vacation_used'),
-            'balance' => $allLeaveRecords->first()->vacation_balance ?? 0 // Latest balance
+            'balance' => $allLeaveRecords->sum('vacation_balance') // Total balance
         ];
         
         $sickSummary = [
             'earned' => $allLeaveRecords->sum('sick_earned'),
             'used' => $allLeaveRecords->sum('sick_used'),
-            'balance' => $allLeaveRecords->first()->sick_balance ?? 0 // Latest balance
+            'balance' => $allLeaveRecords->sum('sick_balance') // Total balance
         ];
         
         return view('hr_leave_record', compact('employee', 'leaveRecords', 'vacationSummary', 'sickSummary'));

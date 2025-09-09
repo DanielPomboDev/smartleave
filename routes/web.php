@@ -32,15 +32,12 @@ Route::middleware(['auth'])->group(function () {
         // Get the authenticated user
         $user = Auth::user();
         
-        // Get the latest leave records for this user
-        $latestLeaveRecord = $user->leaveRecords()
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->first();
+        // Get all leave records for this user
+        $allLeaveRecords = $user->leaveRecords;
             
-        // If no record exists, use default values
-        $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
-        $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
+        // Calculate total balances
+        $vacationBalance = $allLeaveRecords->sum('vacation_balance');
+        $sickBalance = $allLeaveRecords->sum('sick_balance');
         
         // Get recent leave requests for this user
         $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->user_id)
@@ -100,15 +97,12 @@ Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::clas
         // Get the authenticated user
         $user = Auth::user();
         
-        // Get the latest leave records for this user
-        $latestLeaveRecord = $user->leaveRecords()
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->first();
+        // Get all leave records for this user
+        $allLeaveRecords = $user->leaveRecords;
             
-        // If no record exists, use default values
-        $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
-        $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
+        // Calculate total balances
+        $vacationBalance = $allLeaveRecords->sum('vacation_balance');
+        $sickBalance = $allLeaveRecords->sum('sick_balance');
         
         // Get recent leave requests for this user
         $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->user_id)
@@ -123,15 +117,12 @@ Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::clas
         // Get the authenticated user
         $user = Auth::user();
         
-        // Get the latest leave records for this user
-        $latestLeaveRecord = $user->leaveRecords()
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->first();
+        // Get all leave records for this user
+        $allLeaveRecords = $user->leaveRecords;
             
-        // If no record exists, use default values
-        $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
-        $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
+        // Calculate total balances
+        $vacationBalance = $allLeaveRecords->sum('vacation_balance');
+        $sickBalance = $allLeaveRecords->sum('sick_balance');
         
         return view('employee_request_leave', compact('vacationBalance', 'sickBalance'));
     })->name('employee.request.leave');

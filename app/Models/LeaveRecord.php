@@ -42,18 +42,6 @@ class LeaveRecord extends Model
     }
 
     /**
-     * Get formatted vacation entries.
-     */
-    public function getFormattedVacationEntriesAttribute()
-    {
-        if (!$this->vacation_entries) {
-            return [];
-        }
-        
-        return $this->vacation_entries;
-    }
-
-    /**
      * Get formatted sick entries.
      */
     public function getFormattedSickEntriesAttribute()
@@ -62,7 +50,52 @@ class LeaveRecord extends Model
             return [];
         }
         
-        return $this->sick_entries;
+        // Format sick entries to ensure they have a 'days' value
+        $formattedEntries = [];
+        foreach ($this->sick_entries as $entry) {
+            $formattedEntry = $entry;
+            // If 'days' is not set but 'hours' is, calculate days (assuming 8-hour workday)
+            if (!isset($entry['days']) && isset($entry['hours'])) {
+                $formattedEntry['days'] = $entry['hours'] / 8;
+            }
+            // If neither 'days' nor 'hours' is set, default to 0
+            if (!isset($formattedEntry['days'])) {
+                $formattedEntry['days'] = 0;
+            }
+            $formattedEntries[] = $formattedEntry;
+        }
+        
+        return $formattedEntries;
+    }
+
+    /**
+     * Get formatted vacation entries.
+     */
+    public function getFormattedVacationEntriesAttribute()
+    {
+        if (!$this->vacation_entries) {
+            return [];
+        }
+        
+        // Format vacation entries to ensure they have a 'days' value
+        $formattedEntries = [];
+        foreach ($this->vacation_entries as $entry) {
+            $formattedEntry = $entry;
+            // If 'days' is not set but we have start and end dates, calculate days
+            if (!isset($entry['days']) && isset($entry['start_date']) && isset($entry['end_date'])) {
+                $startDate = new \DateTime($entry['start_date']);
+                $endDate = new \DateTime($entry['end_date']);
+                $interval = $startDate->diff($endDate);
+                $formattedEntry['days'] = $interval->days + 1; // +1 to include both start and end dates
+            }
+            // If 'days' is still not set, default to 0
+            if (!isset($formattedEntry['days'])) {
+                $formattedEntry['days'] = 0;
+            }
+            $formattedEntries[] = $formattedEntry;
+        }
+        
+        return $formattedEntries;
     }
 
     /**

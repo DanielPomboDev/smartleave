@@ -124,11 +124,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <button class="btn btn-sm btn-outline">
-                            <i class="fas fa-download mr-1"></i>
-                            Export
-                        </button>
                     </div>
                 </div>
 
@@ -142,8 +137,8 @@
                             </div>
                             <div class="p-6 space-y-4">
                                 <!-- Leave Entries -->
-                                @if($record->vacation_entries)
-                                    @foreach($record->vacation_entries as $vacation)
+                                @if($record->formatted_vacation_entries)
+                                    @foreach($record->formatted_vacation_entries as $vacation)
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                                         <div class="flex items-center space-x-4">
                                             <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -151,7 +146,7 @@
                                             </div>
                                             <div>
                                                 <p class="font-medium text-gray-800">Vacation Leave</p>
-                                                <p class="text-sm text-gray-600">{{ $vacation['days'] ?? 0 }} days</p>
+                                                <p class="text-sm text-gray-600">{{ $vacation['days'] }} days</p>
                                             </div>
                                         </div>
                                         <div class="text-right">
@@ -161,8 +156,8 @@
                                     @endforeach
                                 @endif
 
-                                @if($record->sick_entries)
-                                    @foreach($record->sick_entries as $sick)
+                                @if($record->formatted_sick_entries)
+                                    @foreach($record->formatted_sick_entries as $sick)
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                                         <div class="flex items-center space-x-4">
                                             <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -170,7 +165,7 @@
                                             </div>
                                             <div>
                                                 <p class="font-medium text-gray-800">Sick Leave</p>
-                                                <p class="text-sm text-gray-600">{{ $sick['days'] ?? 0 }} days</p>
+                                                <p class="text-sm text-gray-600">{{ $sick['days'] }} days</p>
                                             </div>
                                         </div>
                                         <div class="text-right">
