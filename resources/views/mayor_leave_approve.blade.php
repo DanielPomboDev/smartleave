@@ -144,12 +144,10 @@
                     @csrf
                     <input type="hidden" name="decision" id="decisionInput" value="approve" />
                     <input type="hidden" name="comments" id="commentsInput" />
-                    <button type="submit" class="btn btn-success" onclick="document.getElementById('decisionInput').value='approve'">
-                        <i class="fi-rr-check mr-2"></i>
+                    <button type="submit" class="btn btn-success">
                         Approve
                     </button>
-                    <button type="submit" class="btn btn-error ml-2" onclick="document.getElementById('decisionInput').value='disapprove'">
-                        <i class="fi-rr-cross mr-2"></i>
+                    <button type="submit" class="btn btn-error ml-2">
                         Reject
                     </button>
                 </form>

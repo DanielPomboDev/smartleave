@@ -101,9 +101,8 @@
                                 <td>{{ $user->position ?? 'No Position' }}</td>
                                 <td>{{ $user->department->name ?? 'No Department' }}</td>
                                 <td>
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('{{ $user->user_id }}')">
-                                        <i class="fi-rr-eye"></i>
-                                        <span>View Record</span>
+                                    <button class="btn btn-sm btn-primary" onclick="viewRecord('{{ $user->user_id }}')">
+                                        View Record
                                     </button>
                                 </td>
                             </tr>
@@ -124,9 +123,8 @@
                                 <td>IT Specialist</td>
                                 <td>IT Department</td>
                                 <td>
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('DA001')">
-                                        <i class="fi-rr-eye"></i>
-                                        <span>View Record</span>
+                                    <button class="btn btn-sm btn-primary" onclick="viewRecord('DA001')">
+                                        View Record
                                     </button>
                                 </td>
                             </tr>
@@ -145,9 +143,8 @@
                                 <td>HR Manager</td>
                                 <td>Human Resources</td>
                                 <td>
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="viewRecord('DA002')">
-                                        <i class="fi-rr-eye"></i>
-                                        <span>View Record</span>
+                                    <button class="btn btn-sm btn-primary" onclick="viewRecord('DA002')">
+                                        View Record
                                     </button>
                                 </td>
                             </tr>

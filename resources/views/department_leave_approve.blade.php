@@ -122,12 +122,10 @@ use App\Models\LeaveRequest;
                         @if($leaveRequest->status === LeaveRequest::STATUS_PENDING)
                             <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(1)">
                                 Next
-                                <i class="fi-rr-arrow-right ml-2"></i>
                             </button>
                         @else
                             <button type="button" class="btn" disabled>
                                 Next
-                                <i class="fi-rr-lock ml-2"></i>
                             </button>
                         @endif
                     </div>
@@ -182,19 +180,16 @@ use App\Models\LeaveRequest;
                         <button type="button"
                             class="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
                             onclick="prevStep(2)">
-                            <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
                         @if($leaveRequest->status === LeaveRequest::STATUS_PENDING)
                             <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
                                 onclick="validateStep2AndProceed()">
                                 Next
-                                <i class="fi-rr-arrow-right ml-2"></i>
                             </button>
                         @else
                             <button type="button" class="btn" disabled>
                                 Next
-                                <i class="fi-rr-lock ml-2"></i>
                             </button>
                         @endif
                     </div>
@@ -227,12 +222,10 @@ use App\Models\LeaveRequest;
                         <button type="button"
                             class="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
                             onclick="prevStep(3)">
-                            <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
                         @if($leaveRequest->status === LeaveRequest::STATUS_PENDING)
                             <button type="submit" class="btn bg-green-500 hover:bg-green-600 text-white">
-                                <i class="fi-rr-check mr-2"></i>
                                 Submit Recommendation
                             </button>
                         @else

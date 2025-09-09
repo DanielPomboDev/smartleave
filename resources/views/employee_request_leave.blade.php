@@ -91,7 +91,6 @@
                     <div class="flex justify-end mt-6">
                         <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(1)">
                             Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </div>
@@ -146,12 +145,10 @@
                     
                     <div class="flex justify-between mt-6">
                         <button type="button" class="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white" onclick="prevStep(2)">
-                            <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
                         <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(2)">
                             Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </div>
@@ -224,12 +221,10 @@
                     
                     <div class="flex justify-between mt-6">
                         <button type="button" class="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white" onclick="prevStep(3)">
-                            <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
                         <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white" onclick="nextStep(3)">
                             Next
-                            <i class="fi-rr-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </div>
@@ -291,12 +286,10 @@
                     
                     <div class="flex justify-between mt-6">
                         <button type="button" class="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white" onclick="prevStep(4)">
-                            <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
                         <button type="button" onclick="showConfirmModal()" class="btn bg-blue-500 hover:bg-blue-600 text-white">
                             Submit Request
-                            <i class="fi-rr-check ml-2"></i>
                         </button>
                     </div>
                 </div>

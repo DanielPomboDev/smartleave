@@ -7,7 +7,7 @@
     <!-- Delete Confirmation Modal -->
     <dialog id="deleteEmployeeModal" class="modal">
         <div class="modal-box">
-            <h3 class="font-bold text-lg text-error"><i class="fi-rr-exclamation mr-2"></i>Confirm Delete</h3>
+            <h3 class="font-bold text-lg text-error">Confirm Delete</h3>
             <p class="py-4">Are you sure you want to delete <span id="employeeNameToDelete" class="font-bold"></span>? This action cannot be undone.</p>
             <div class="modal-action">
                 <button onclick="document.getElementById('deleteEmployeeModal').close()" class="btn btn-outline">Cancel</button>
@@ -22,7 +22,7 @@
     <!-- Success Modal -->
     <dialog id="employeeSuccessModal" class="modal">
         <div class="modal-box">
-            <h3 class="font-bold text-lg text-success"><i class="fi-rr-check mr-2"></i>Success!</h3>
+            <h3 class="font-bold text-lg text-success">Success!</h3>
             <p id="employeeSuccessMessage" class="py-4">Employee information has been saved successfully.</p>
             <div class="modal-action">
                 <button onclick="document.getElementById('employeeSuccessModal').close()" class="btn btn-primary">OK</button>
@@ -42,7 +42,6 @@
                 </h2>
                 
                 <button class="btn btn-primary" onclick="openAddEmployeeModal()">
-                    <i class="fi-rr-user-add mr-2"></i>
                     Add Employee
                 </button>
             </div>
@@ -126,13 +125,11 @@
                             <td>{{ $user->department->name }}</td>
                             <td>
                                 <div class="flex space-x-2">
-                                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="openEditEmployeeModal('{{ $user->user_id }}')">
-                                        <i class="fi-rr-edit"></i>
-                                        <span>Edit</span>
+                                    <button class="btn btn-sm btn-primary" onclick="openEditEmployeeModal('{{ $user->user_id }}')">
+                                        Edit
                                     </button>
-                                    <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md border-none transition-colors duration-200 flex items-center justify-center gap-1" onclick="confirmDeleteEmployee('{{ $user->user_id }}', '{{ $user->first_name }} {{ $user->last_name }}')">
-                                        <i class="fi-rr-trash"></i>
-                                        <span>Delete</span>
+                                    <button class="btn btn-sm btn-error" onclick="confirmDeleteEmployee('{{ $user->user_id }}', '{{ $user->first_name }} {{ $user->last_name }}')">
+                                        Delete
                                     </button>
                                 </div>
                             </td>

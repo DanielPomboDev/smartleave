@@ -89,21 +89,18 @@
                 @if($leaveRequest->isCancellable())
                 <div class="flex justify-end">
                     <button onclick="document.getElementById('cancelModal').showModal()" class="btn btn-error">
-                        <i class="fi-rr-cross mr-2"></i>
                         Cancel Leave Request
                     </button>
                 </div>
                 @elseif($leaveRequest->isFullyApproved())
                 <div class="flex justify-end">
                     <button class="btn btn-disabled" disabled>
-                        <i class="fi-rr-cross mr-2"></i>
                         Cancel Leave Request (Approved)
                     </button>
                 </div>
                 @elseif($leaveRequest->isCancelled())
                 <div class="flex justify-end">
                     <button class="btn btn-disabled" disabled>
-                        <i class="fi-rr-cross mr-2"></i>
                         Leave Request Cancelled
                     </button>
                 </div>
@@ -131,7 +128,6 @@
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-error">
-                    <i class="fi-rr-cross mr-2"></i>
                     Yes, Cancel Request
                 </button>
             </form>

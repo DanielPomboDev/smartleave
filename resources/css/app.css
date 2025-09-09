@@ -14,6 +14,37 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* Import Fluent Icons */
+/* @import '@fluentui/svg-icons/dist/fluent-icons.css'; - This package doesn't include CSS files */
 
- 
+/* Fix for button text alignment issues */
+/* Ensure buttons are properly centered */
+.btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
 
+/* Specific fix for small buttons */
+.btn.btn-sm {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Fix for anchor buttons */
+a.btn.btn-outline {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    text-decoration: none !important;
+}
+
+/* Ensure consistent padding for buttons */
+.btn {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}

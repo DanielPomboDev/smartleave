@@ -69,9 +69,9 @@
             </div>
             
             <div class="flex justify-end mt-3">
-                <button type="button" class="btn btn-sm btn-primary" onclick="quickNextStep(1)">
+                <button type="button" class="btn btn-sm btn-primary inline-flex items-center" onclick="quickNextStep(1)">
                     Next
-                    <i class="fi-rr-arrow-right ml-1"></i>
+                    <i class="fi-rr-arrow-right"></i>
                 </button>
             </div>
         </div>
@@ -114,11 +114,11 @@
             </div>
             
             <div class="flex justify-between mt-3">
-                <button type="button" class="btn btn-sm btn-outline" onclick="quickPrevStep(2)">
+                <button type="button" class="btn btn-sm btn-outline inline-flex items-center" onclick="quickPrevStep(2)">
                     <i class="fi-rr-arrow-left mr-1"></i>
                     Back
                 </button>
-                <button type="button" class="btn btn-sm btn-primary" onclick="quickNextStep(2)">
+                <button type="button" class="btn btn-sm btn-primary inline-flex items-center" onclick="quickNextStep(2)">
                     Next
                     <i class="fi-rr-arrow-right ml-1"></i>
                 </button>
@@ -161,11 +161,11 @@
             </div>
             
             <div class="flex justify-between mt-3">
-                <button type="button" class="btn btn-sm btn-outline" onclick="quickPrevStep(3)">
+                <button type="button" class="btn btn-sm btn-outline inline-flex items-center" onclick="quickPrevStep(3)">
                     <i class="fi-rr-arrow-left mr-1"></i>
                     Back
                 </button>
-                <button type="button" class="btn btn-sm btn-primary" onclick="showQuickConfirmModal()">
+                <button type="button" class="btn btn-sm btn-primary inline-flex items-center" onclick="showQuickConfirmModal()">
                     Submit
                     <i class="fi-rr-paper-plane ml-1"></i>
                 </button>

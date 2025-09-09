@@ -183,11 +183,9 @@
                 <!-- Action Buttons -->
                 <div class="flex justify-end space-x-3 pt-4">
                     <a href="{{ route('leave.record.show', $record->user_id) }}" class="btn btn-outline">
-                        <i class="fi-rr-arrow-left mr-2"></i>
                         Cancel
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fi-rr-check mr-2"></i>
                         Update Leave Record
                     </button>
                 </div>

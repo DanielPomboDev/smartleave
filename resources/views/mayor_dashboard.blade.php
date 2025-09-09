@@ -76,9 +76,9 @@
                     Recent Leave Requests
                 </h2>
                 
-                <a href="{{ route('mayor.leave.requests') }}" class="btn btn-sm btn-outline">
+                <a href="{{ route('mayor.leave.requests') }}" class="btn btn-sm btn-outline inline-flex items-center">
                     View All Requests
-                    <i class="fi-rr-arrow-right ml-2"></i>
+                    <i class="fi-rr-arrow-right"></i>
                 </a>
             </div>
             

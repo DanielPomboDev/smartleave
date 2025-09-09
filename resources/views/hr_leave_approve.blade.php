@@ -108,7 +108,6 @@
                             <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
                                 onclick="nextStep(1)">
                                 Next
-                                <i class="fi-rr-arrow-right ml-2"></i>
                             </button>
                         @else
                             @if($leaveRequest->isCancelled())
@@ -199,14 +198,12 @@
                         <button type="button"
                             class="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
                             onclick="prevStep(2)">
-                            <i class="fi-rr-arrow-left mr-2"></i>
                             Previous
                         </button>
                         @if($leaveRequest->status === App\Models\LeaveRequest::STATUS_RECOMMENDED)
                             <button type="button" class="btn bg-blue-500 hover:bg-blue-600 text-white"
                                 onclick="nextStep(2)">
                                 Next
-                                <i class="fi-rr-arrow-right ml-2"></i>
                             </button>
                         @else
                             @if($leaveRequest->isCancelled())

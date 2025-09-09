@@ -20,7 +20,7 @@
                         <p class="text-sm text-gray-500">Employee ID: {{ $employee->user_id ?? 'ID' }}</p>
                     </div>
                 </div>
-                <button onclick="openAddUndertimeModal()" class="btn bg-blue-500 hover:bg-blue-600 text-white border-none">
+                <button onclick="openAddUndertimeModal()" class="btn btn-primary">
                     <i class="fas fa-plus mr-2"></i>
                     Add Undertime
                 </button>
@@ -74,7 +74,7 @@
                             <button class="btn btn-sm btn-outline">
                                 <i class="fas fa-filter mr-1"></i>
                                 Filter
-                                <i class="fas fa-chevron-down ml-1"></i>
+                                <i class="fas fa-angle-down ml-1"></i>
                             </button>
                             <div class="dropdown-content bg-white shadow-lg rounded-lg border border-gray-200 p-4 w-64 z-50">
                                 <h4 class="font-medium text-gray-800 mb-3">Filter Options</h4>
@@ -113,12 +113,12 @@
                                 
                                 <!-- Filter Actions -->
                                 <div class="flex gap-2">
-                                    <button onclick="applyFilters()" class="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white border-none flex-1">
-                                        <i class="fas fa-check mr-1"></i>
+                                    <button onclick="applyFilters()" class="btn btn-sm btn-primary flex-1">
+                                        <i class="fi-rr-check mr-1"></i>
                                         Apply
                                     </button>
                                     <button onclick="clearFilters()" class="btn btn-sm btn-outline flex-1">
-                                        <i class="fas fa-times mr-1"></i>
+                                        <i class="fi-rr-cross mr-1"></i>
                                         Clear
                                     </button>
                                 </div>
@@ -306,7 +306,7 @@
                 </div>
                 <div class="modal-action">
                     <button type="button" class="btn btn-ghost" onclick="closeAddUndertimeModal()">Cancel</button>
-                    <button type="submit" class="btn bg-blue-500 hover:bg-blue-600 text-white border-none">Add Undertime</button>
+                    <button type="submit" class="btn btn-primary">Add Undertime</button>
                 </div>
             </form>
         </div>
