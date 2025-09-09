@@ -218,12 +218,18 @@
                         if (data.status === 'new') {
                             iconHtml = '<i class="fas fa-hourglass-half text-yellow-500 text-lg"></i>';
                             message = `<div class="text-sm text-gray-800">New leave request from <span class="font-semibold">${data.employee_name}</span> for <span class="font-semibold">${data.leave_type}</span>.</div>`;
+                        } else if (data.status === 'recommended') {
+                            iconHtml = '<i class="fas fa-hourglass-half text-yellow-500 text-lg"></i>';
+                            message = `<div class="text-sm text-gray-800">${data.message}</div>`;
+                        } else if (data.status === 'hr_approved') {
+                            iconHtml = '<i class="fas fa-check-circle text-green-500 text-lg"></i>';
+                            message = `<div class="text-sm text-gray-800">${data.message}</div>`;
                         } else if (data.status === 'approved') {
                             iconHtml = '<i class="fas fa-check-circle text-green-500 text-lg"></i>';
-                            message = `<div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">${data.leave_type}</span> was <span class="text-green-600 font-semibold">approved</span>.</div>`;
+                            message = `<div class="text-sm text-gray-800">${data.message}</div>`;
                         } else if (data.status === 'disapproved') {
                             iconHtml = '<i class="fas fa-times-circle text-red-500 text-lg"></i>';
-                            message = `<div class="text-sm text-gray-800">Your leave request for <span class="font-semibold">${data.leave_type}</span> was <span class="text-red-600 font-semibold">rejected</span>.</div>`;
+                            message = `<div class="text-sm text-gray-800">${data.message}</div>`;
                         } else {
                             iconHtml = '<i class="fas fa-info-circle text-blue-500 text-lg"></i>';
                             message = `<div class="text-sm text-gray-800">${data.message}</div>`;

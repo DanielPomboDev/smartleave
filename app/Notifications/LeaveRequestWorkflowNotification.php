@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class LeaveRequestWorkflowNotification extends Notification implements ShouldQueue
+class LeaveRequestWorkflowNotification extends Notification
 {
     use Queueable;
 
