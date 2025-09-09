@@ -422,6 +422,53 @@
             
             // If all validations pass, calculate days
             calculateDays();
+            
+            // Validate leave credits
+            if (!validateLeaveCredits(leaveType)) {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function validateLeaveCredits(leaveType) {
+            const numberOfDays = parseInt(document.getElementById('numberOfDays').value) || 0;
+            
+            if (!leaveType || numberOfDays <= 0) return true; // Skip validation if not ready
+            
+            // Get available credits from the dashboard (these would be passed from the backend)
+            let availableCredits = 0;
+            if (leaveType === 'vacation') {
+                // Get vacation balance from the dashboard
+                const vacationCard = document.querySelector('[data-leave-type="vacation"]');
+                if (vacationCard) {
+                    const balanceText = vacationCard.querySelector('.text-4xl')?.textContent || '0';
+                    availableCredits = parseFloat(balanceText) || 0;
+                } else {
+                    // Fallback to default values if dashboard elements not found
+                    availableCredits = 15; // Default vacation balance
+                }
+            } else if (leaveType === 'sick') {
+                // Get sick balance from the dashboard
+                const sickCard = document.querySelector('[data-leave-type="sick"]');
+                if (sickCard) {
+                    const balanceText = sickCard.querySelector('.text-4xl')?.textContent || '0';
+                    availableCredits = parseFloat(balanceText) || 0;
+                } else {
+                    // Fallback to default values if dashboard elements not found
+                    availableCredits = 12; // Default sick balance
+                }
+            }
+            
+            // Check if user has sufficient credits
+            if (numberOfDays > availableCredits) {
+                const validationMessage = document.getElementById('dateValidationMessage');
+                const validationText = document.getElementById('dateValidationText');
+                validationText.textContent = `Insufficient ${leaveType} leave credits. You have ${availableCredits} days available but are requesting ${numberOfDays} days.`;
+                validationMessage.classList.remove('hidden');
+                return false;
+            }
+            
             return true;
         }
         

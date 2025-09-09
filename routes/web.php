@@ -120,7 +120,20 @@ Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::clas
     })->name('employee.dashboard');
 
     Route::get('/request-leave', function () {
-        return view('employee_request_leave');
+        // Get the authenticated user
+        $user = Auth::user();
+        
+        // Get the latest leave records for this user
+        $latestLeaveRecord = $user->leaveRecords()
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->first();
+            
+        // If no record exists, use default values
+        $vacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 15;
+        $sickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 12;
+        
+        return view('employee_request_leave', compact('vacationBalance', 'sickBalance'));
     })->name('employee.request.leave');
 
     Route::get('/settings', function () {

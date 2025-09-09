@@ -393,6 +393,31 @@
         return true;
     }
     
+    // Function to validate leave credits
+    function validateLeaveCredits(leaveType) {
+        const numberOfDays = parseInt(document.getElementById('numberOfDays').value) || 0;
+        
+        if (!leaveType || numberOfDays <= 0) return true; // Skip validation if not ready
+        
+        // Get available credits from the server-side variables passed to the view
+        let availableCredits = 0;
+        if (leaveType === 'vacation') {
+            // Use the vacation balance passed from the backend
+            availableCredits = {{ $vacationBalance ?? 15 }};
+        } else if (leaveType === 'sick') {
+            // Use the sick balance passed from the backend
+            availableCredits = {{ $sickBalance ?? 12 }};
+        }
+        
+        // Check if user has sufficient credits
+        if (numberOfDays > availableCredits) {
+            showError(`Insufficient ${leaveType} leave credits. You have ${availableCredits} days available but are requesting ${numberOfDays} days.`, 'step2');
+            return false;
+        }
+        
+        return true;
+    }
+    
     // Function to update date restrictions based on leave type
     function updateDateRestrictions(leaveType) {
         const startDateInput = document.getElementById('startDate');
@@ -666,15 +691,21 @@
                 isValid = false;
             }
             
+            // Get leave type first
+            const leaveType = getSelectedLeaveType();
+            
             // Validate dates
             if (startDate && endDate && startDate.value && endDate.value) {
                 if (!validateDates()) {
                     isValid = false;
                 }
+                // Validate leave credits
+                else if (!validateLeaveCredits(leaveType)) {
+                    isValid = false;
+                }
             }
             
             // Validate location based on leave type
-            const leaveType = getSelectedLeaveType();
             if (leaveType) {
                 const locationSection = document.getElementById(leaveType + 'Location');
                 if (locationSection && !locationSection.classList.contains('hidden')) {

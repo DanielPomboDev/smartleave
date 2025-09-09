@@ -151,6 +151,31 @@ class LeaveController extends Controller
         $endDate = Carbon::parse($validated['endDate']);
         $numberOfDays = $startDate->diffInDays($endDate) + 1; // Include both start and end dates
 
+        // Check if employee has sufficient leave credits
+        $hasSufficientCredits = $this->hasSufficientLeaveCredits($validated['leaveType'], $numberOfDays, Auth::id());
+        if (!$hasSufficientCredits) {
+            // Get the latest leave record for this user to determine their current balance
+            $latestLeaveRecord = \App\Models\LeaveRecord::where('user_id', Auth::id())
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+                
+            // If no record exists, use default values
+            if (!$latestLeaveRecord) {
+                $vacationBalance = 15; // Default vacation balance
+                $sickBalance = 12;     // Default sick balance
+            } else {
+                $vacationBalance = $latestLeaveRecord->vacation_balance;
+                $sickBalance = $latestLeaveRecord->sick_balance;
+            }
+            
+            $availableCredits = $validated['leaveType'] === 'vacation' ? $vacationBalance : $sickBalance;
+            
+            return redirect()->back()
+                ->withErrors(['leaveType' => "Insufficient {$validated['leaveType']} leave credits. You have {$availableCredits} days available but are requesting {$numberOfDays} days."])
+                ->withInput();
+        }
+
         // No signature processing needed
 
         // Create the leave request
@@ -749,6 +774,41 @@ class LeaveController extends Controller
         }
 
         return redirect()->route('mayor.leave.requests')->with('success', 'Final decision recorded.');
+    }
+
+    /**
+     * Check if employee has sufficient leave credits for a request
+     *
+     * @param string $leaveType
+     * @param int $numberOfDays
+     * @param int $userId
+     * @return bool
+     */
+    private function hasSufficientLeaveCredits($leaveType, $numberOfDays, $userId)
+    {
+        // Get the latest leave record for this user to determine their current balance
+        $latestLeaveRecord = \App\Models\LeaveRecord::where('user_id', $userId)
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->first();
+            
+        // If no record exists, use default values
+        if (!$latestLeaveRecord) {
+            $vacationBalance = 15; // Default vacation balance
+            $sickBalance = 12;     // Default sick balance
+        } else {
+            $vacationBalance = $latestLeaveRecord->vacation_balance;
+            $sickBalance = $latestLeaveRecord->sick_balance;
+        }
+        
+        // Check if the user has sufficient credits
+        if ($leaveType === 'vacation') {
+            return $vacationBalance >= $numberOfDays;
+        } elseif ($leaveType === 'sick') {
+            return $sickBalance >= $numberOfDays;
+        }
+        
+        return false;
     }
 
     /**

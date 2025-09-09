@@ -35,7 +35,7 @@
     $colors = $colorClasses[$bgColor] ?? $colorClasses['blue'];
 @endphp
 
-<div class="{{ $colors['bg'] }} rounded-lg p-5 flex items-center justify-between h-full">
+<div class="{{ $colors['bg'] }} rounded-lg p-5 flex items-center justify-between h-full" data-leave-type="{{ strtolower(strtok($type, ' ')) }}">
     <div>
         <p class="text-sm font-medium text-gray-500">{{ $type }}</p>
         <p class="text-4xl font-bold {{ $colors['text'] }} mt-2">{{ $balance }}</p>
