@@ -364,22 +364,31 @@
             document.getElementById('locationSpecifyContainer').classList.toggle('hidden', !isAbroad);
         }
         
+        // Function to validate dates based on leave type
         function validateDates() {
-            const startDate = document.querySelector('input[name="startDate"]').value;
-            const endDate = document.querySelector('input[name="endDate"]').value;
+            const startDateInput = document.querySelector('input[name="startDate"]');
+            const endDateInput = document.querySelector('input[name="endDate"]');
             const leaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
             
+            // Clear previous validation messages
             const validationMessage = document.getElementById('dateValidationMessage');
             const validationText = document.getElementById('dateValidationText');
             const startDateWarning = document.getElementById('startDateWarning');
             
-            // Hide previous validation messages
-            validationMessage.classList.add('hidden');
-            startDateWarning.textContent = '';
-            
-            if (!startDate || !endDate) {
-                return false;
+            if (validationMessage) {
+                validationMessage.classList.add('hidden');
             }
+            
+            if (startDateWarning) {
+                startDateWarning.textContent = '';
+            }
+            
+            if (!startDateInput || !endDateInput) return true;
+            
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            
+            if (!startDate || !endDate) return true;
             
             const start = new Date(startDate);
             const end = new Date(endDate);
@@ -388,15 +397,23 @@
             
             // Check if end date is before start date
             if (end < start) {
-                validationText.textContent = 'End date cannot be earlier than start date';
-                validationMessage.classList.remove('hidden');
+                if (validationText) {
+                    validationText.textContent = 'End date cannot be earlier than start date';
+                }
+                if (validationMessage) {
+                    validationMessage.classList.remove('hidden');
+                }
                 return false;
             }
             
             // Check if start date is in the past
             if (start < today) {
-                validationText.textContent = 'Start date cannot be in the past';
-                validationMessage.classList.remove('hidden');
+                if (validationText) {
+                    validationText.textContent = 'Start date cannot be in the past';
+                }
+                if (validationMessage) {
+                    validationMessage.classList.remove('hidden');
+                }
                 return false;
             }
             
@@ -405,12 +422,20 @@
                 const daysDifference = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
                 
                 if (daysDifference < 5) {
-                    validationText.textContent = 'Vacation leave must be applied at least 5 days before the start date';
-                    validationMessage.classList.remove('hidden');
-                    startDateWarning.textContent = `(${daysDifference} days notice - requires 5 days minimum)`;
+                    if (validationText) {
+                        validationText.textContent = 'Vacation leave must be applied at least 5 days before the start date';
+                    }
+                    if (validationMessage) {
+                        validationMessage.classList.remove('hidden');
+                    }
+                    if (startDateWarning) {
+                        startDateWarning.textContent = `(${daysDifference} days notice - requires 5 days minimum)`;
+                    }
                     return false;
                 } else {
-                    startDateWarning.textContent = `(${daysDifference} days notice - OK)`;
+                    if (startDateWarning) {
+                        startDateWarning.textContent = `(${daysDifference} days notice - OK)`;
+                    }
                 }
             }
             
@@ -423,10 +448,8 @@
             // If all validations pass, calculate days
             calculateDays();
             
-            // Validate leave credits
-            if (!validateLeaveCredits(leaveType)) {
-                return false;
-            }
+            // Validate leave credits (but don't block submission)
+            validateLeaveCredits(leaveType);
             
             return true;
         }
@@ -464,9 +487,16 @@
             if (numberOfDays > availableCredits) {
                 const validationMessage = document.getElementById('dateValidationMessage');
                 const validationText = document.getElementById('dateValidationText');
-                validationText.textContent = `Insufficient ${leaveType} leave credits. You have ${availableCredits} days available but are requesting ${numberOfDays} days.`;
+                validationText.textContent = `Insufficient ${leaveType} leave credits. You have ${availableCredits} days available but are requesting ${numberOfDays} days. This leave will be considered without pay.`;
                 validationMessage.classList.remove('hidden');
-                return false;
+                // Return true to allow submission to continue
+                return true;
+            } else {
+                // Hide validation message if credits are sufficient
+                const validationMessage = document.getElementById('dateValidationMessage');
+                if (validationMessage && !validationMessage.classList.contains('hidden')) {
+                    validationMessage.classList.add('hidden');
+                }
             }
             
             return true;

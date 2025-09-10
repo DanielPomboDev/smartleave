@@ -11,6 +11,15 @@
     </div>
     @endif
     
+    @if(session('warning'))
+    <div class="alert alert-warning shadow-lg mb-6">
+        <div>
+            <i class="fi-rr-info text-warning"></i>
+            <span>{{ session('warning') }}</span>
+        </div>
+    </div>
+    @endif
+    
     <div class="card bg-white shadow-md mb-6">
         <div class="card-body">
             <h2 class="card-title text-xl font-bold text-gray-800 mb-4">
@@ -390,6 +399,10 @@
         
         // If all validations pass, calculate days
         calculateDays();
+        
+        // Validate leave credits after calculating days
+        validateLeaveCredits(leaveType);
+        
         return true;
     }
     
@@ -411,11 +424,65 @@
         
         // Check if user has sufficient credits
         if (numberOfDays > availableCredits) {
-            showError(`Insufficient ${leaveType} leave credits. You have ${availableCredits} days available but are requesting ${numberOfDays} days.`, 'step2');
-            return false;
+            // Remove any existing error messages for leave credits
+            const step2 = document.getElementById('step2');
+            if (step2) {
+                const existingErrors = step2.querySelectorAll('.validation-error');
+                existingErrors.forEach(el => {
+                    const errorMessage = el.textContent || el.innerText;
+                    if (errorMessage.includes('Insufficient') && errorMessage.includes('leave credits')) {
+                        el.remove();
+                    }
+                });
+            }
+            
+            // Instead of blocking submission, just show a warning
+            showWarningMessage(`Insufficient ${leaveType} leave credits. You have ${availableCredits} days available but are requesting ${numberOfDays} days. This leave will be considered without pay.`, 'step2');
+            // Return true to allow submission to continue
+            return true;
+        } else {
+            // Remove any existing warning messages if credits are sufficient
+            const step2 = document.getElementById('step2');
+            if (step2) {
+                const existingWarnings = step2.querySelectorAll('.validation-warning');
+                existingWarnings.forEach(el => {
+                    const warningMessage = el.textContent || el.innerText;
+                    if (warningMessage.includes('Insufficient') && warningMessage.includes('leave credits')) {
+                        el.remove();
+                    }
+                });
+            }
         }
         
         return true;
+    }
+    
+    // Helper function to show warning messages (non-blocking)
+    function showWarningMessage(message, stepId) {
+        const step = document.getElementById(stepId);
+        if (!step) return;
+        
+        // Remove any existing warning messages
+        const existingWarnings = step.querySelectorAll('.validation-warning');
+        existingWarnings.forEach(el => el.remove());
+        
+        // Create warning message element
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'validation-warning alert alert-warning mt-4';
+        warningDiv.innerHTML = `<div><i class="fi-rr-info text-warning"></i><span>${message}</span></div>`;
+        
+        // Find the button container in this step
+        const buttonContainer = step.querySelector('.flex.justify-end');
+        if (buttonContainer) {
+            // Insert before the button container
+            buttonContainer.parentNode.insertBefore(warningDiv, buttonContainer);
+        } else {
+            // Append to the end of the step if button container not found
+            step.appendChild(warningDiv);
+        }
+        
+        // Scroll to the warning message
+        warningDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     
     // Function to update date restrictions based on leave type
@@ -1256,6 +1323,13 @@
                     }
                     validateDates();
                 }
+            });
+        }
+        
+        // Add event listener to validate dates when end date changes
+        if (endDateInput) {
+            endDateInput.addEventListener('change', function() {
+                validateDates();
             });
         }
         

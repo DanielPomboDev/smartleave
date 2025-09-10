@@ -87,140 +87,173 @@ class LeaveController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate the request
-        $validated = $request->validate([
-            'leaveType' => 'required|string|in:vacation,sick',
-            'startDate' => 'required|date',
-            'endDate' => 'required|date|after_or_equal:startDate',
-            'numberOfDays' => 'required|integer|min:1',
-            'locationType' => 'required|string',
-            'location_specify' => 'nullable|string|max:255',
-            'commutation' => 'nullable|boolean',
-        ]);
+        try {
+            // Add debug logging
+            \Log::info('Leave request submission started', [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all()
+            ]);
 
-        // Additional validation for vacation leave timing
-        if ($validated['leaveType'] === 'vacation') {
+            // Validate the request
+            $validated = $request->validate([
+                'leaveType' => 'required|string|in:vacation,sick',
+                'startDate' => 'required|date',
+                'endDate' => 'required|date|after_or_equal:startDate',
+                'numberOfDays' => 'required|integer|min:1',
+                'locationType' => 'required|string',
+                'location_specify' => 'nullable|string|max:255',
+                'commutation' => 'nullable|boolean',
+            ]);
+
+            // Additional validation for vacation leave timing
+            if ($validated['leaveType'] === 'vacation') {
+                $startDate = Carbon::parse($validated['startDate']);
+                $today = Carbon::today();
+                $daysDifference = $today->diffInDays($startDate, false); // false to get signed difference
+
+                if ($daysDifference < 5) {
+                    return redirect()->back()
+                        ->withErrors(['startDate' => 'Vacation leave must be applied at least 5 days before the start date.'])
+                        ->withInput();
+                }
+            }
+
+            // Additional validation based on leave type
+            if ($validated['leaveType'] === 'vacation') {
+                $request->validate([
+                    'vacationSubtype' => 'required|string',
+                    'vacationOtherSpecify' => 'required_if:vacationSubtype,other|nullable|string|max:255',
+                ]);
+
+                // Get the full text for vacation subtype
+                if ($request->input('vacationSubtype') === 'employment') {
+                    $subtype = 'To seek employment';
+                } elseif ($request->input('vacationSubtype') === 'other') {
+                    $subtype = $request->input('vacationOtherSpecify');
+                } else {
+                    $subtype = $request->input('vacationSubtype');
+                }
+            } else { // sick leave
+                $request->validate([
+                    'sickSubtype' => 'required|string',
+                    'sickOtherSpecify' => 'required_if:sickSubtype,other|nullable|string|max:255',
+                ]);
+
+                // Get the full text for sick subtype
+                if ($request->input('sickSubtype') === 'other') {
+                    $subtype = $request->input('sickOtherSpecify');
+                } else {
+                    // Map the value to its full text
+                    $sickSubtypeMap = [
+                        'hospital' => 'In Hospital',
+                        'outpatient' => 'Outpatient',
+                        // Add other mappings as needed
+                    ];
+                    $subtype = $sickSubtypeMap[$request->input('sickSubtype')] ?? $request->input('sickSubtype');
+                }
+            }
+
+            // Calculate number of days (in case it's different from what was submitted)
             $startDate = Carbon::parse($validated['startDate']);
-            $today = Carbon::today();
-            $daysDifference = $today->diffInDays($startDate, false); // false to get signed difference
+            $endDate = Carbon::parse($validated['endDate']);
+            $numberOfDays = $startDate->diffInDays($endDate) + 1; // Include both start and end dates
 
-            if ($daysDifference < 5) {
-                return redirect()->back()
-                    ->withErrors(['startDate' => 'Vacation leave must be applied at least 5 days before the start date.'])
-                    ->withInput();
-            }
-        }
-
-        // Additional validation based on leave type
-        if ($validated['leaveType'] === 'vacation') {
-            $request->validate([
-                'vacationSubtype' => 'required|string',
-                'vacationOtherSpecify' => 'required_if:vacationSubtype,other|nullable|string|max:255',
+            // Check if employee has sufficient leave credits
+            $hasSufficientCredits = $this->hasSufficientLeaveCredits($validated['leaveType'], $numberOfDays, Auth::id());
+            \Log::info('Leave credits check', [
+                'user_id' => Auth::id(),
+                'leave_type' => $validated['leaveType'],
+                'requested_days' => $numberOfDays,
+                'has_sufficient_credits' => $hasSufficientCredits
             ]);
-
-            // Get the full text for vacation subtype
-            if ($request->input('vacationSubtype') === 'employment') {
-                $subtype = 'To seek employment';
-            } elseif ($request->input('vacationSubtype') === 'other') {
-                $subtype = $request->input('vacationOtherSpecify');
-            } else {
-                $subtype = $request->input('vacationSubtype');
-            }
-        } else { // sick leave
-            $request->validate([
-                'sickSubtype' => 'required|string',
-                'sickOtherSpecify' => 'required_if:sickSubtype,other|nullable|string|max:255',
-            ]);
-
-            // Get the full text for sick subtype
-            if ($request->input('sickSubtype') === 'other') {
-                $subtype = $request->input('sickOtherSpecify');
-            } else {
-                // Map the value to its full text
-                $sickSubtypeMap = [
-                    'hospital' => 'In Hospital',
-                    'outpatient' => 'Outpatient',
-                    // Add other mappings as needed
-                ];
-                $subtype = $sickSubtypeMap[$request->input('sickSubtype')] ?? $request->input('sickSubtype');
-            }
-        }
-
-        // Calculate number of days (in case it's different from what was submitted)
-        $startDate = Carbon::parse($validated['startDate']);
-        $endDate = Carbon::parse($validated['endDate']);
-        $numberOfDays = $startDate->diffInDays($endDate) + 1; // Include both start and end dates
-
-        // Check if employee has sufficient leave credits
-        $hasSufficientCredits = $this->hasSufficientLeaveCredits($validated['leaveType'], $numberOfDays, Auth::id());
-        if (!$hasSufficientCredits) {
-            // Get the latest leave record for this user to determine their current balance
-            $latestLeaveRecord = \App\Models\LeaveRecord::where('user_id', Auth::id())
-                ->orderBy('year', 'desc')
-                ->orderBy('month', 'desc')
-                ->first();
+            
+            if (!$hasSufficientCredits) {
+                // Get the latest leave record for this user to determine their current balance
+                $latestLeaveRecord = \App\Models\LeaveRecord::where('user_id', Auth::id())
+                    ->orderBy('year', 'desc')
+                    ->orderBy('month', 'desc')
+                    ->first();
+                    
+                // If no record exists, use default values
+                if (!$latestLeaveRecord) {
+                    $vacationBalance = 15; // Default vacation balance
+                    $sickBalance = 12;     // Default sick balance
+                } else {
+                    $vacationBalance = $latestLeaveRecord->vacation_balance;
+                    $sickBalance = $latestLeaveRecord->sick_balance;
+                }
                 
-            // If no record exists, use default values
-            if (!$latestLeaveRecord) {
-                $vacationBalance = 15; // Default vacation balance
-                $sickBalance = 12;     // Default sick balance
-            } else {
-                $vacationBalance = $latestLeaveRecord->vacation_balance;
-                $sickBalance = $latestLeaveRecord->sick_balance;
+                $availableCredits = $validated['leaveType'] === 'vacation' ? $vacationBalance : $sickBalance;
+                
+                // Instead of preventing submission, we'll add a flag to indicate insufficient credits
+                // and show a warning message
+                $request->session()->flash('warning', "Insufficient {$validated['leaveType']} leave credits. You have {$availableCredits} days available but are requesting {$numberOfDays} days. This leave will be considered without pay.");
+                
+                \Log::info('Insufficient leave credits warning set', [
+                    'user_id' => Auth::id(),
+                    'warning_message' => "Insufficient {$validated['leaveType']} leave credits. You have {$availableCredits} days available but are requesting {$numberOfDays} days. This leave will be considered without pay."
+                ]);
             }
+
+            // No signature processing needed
+
+            // Create the leave request
+            $leaveRequest = new LeaveRequest();
+            $leaveRequest->user_id = Auth::id();
+            $leaveRequest->leave_type = $validated['leaveType'];
+            $leaveRequest->subtype = $subtype;
+            $leaveRequest->start_date = $validated['startDate'];
+            $leaveRequest->end_date = $validated['endDate'];
+            $leaveRequest->number_of_days = $numberOfDays;
+            // Handle location data with full text
+            if ($validated['locationType'] === 'abroad' && !empty($validated['location_specify'])) {
+                // For abroad, store the specified country
+                $whereSpent = $validated['location_specify'];
+            } else if ($validated['locationType'] === 'outpatient' && !empty($validated['location_specify'])) {
+                // For outpatient, store the specified location
+                $whereSpent = $validated['location_specify'];
+            } else {
+                // For other location types, use the mapped full text
+                $locationTypeMap = [
+                    'philippines' => 'Within the Philippines',
+                    'abroad' => 'Abroad', // Only used if no specification provided
+                    'hospital' => 'In Hospital',
+                    'outpatient' => 'Outpatient' // Only used if no specification provided
+                ];
+
+                $whereSpent = $locationTypeMap[$validated['locationType']] ?? $validated['locationType'];
+            }
+            $leaveRequest->where_spent = $whereSpent;
+            // Handle commutation as boolean (1 for requested, 0 for not requested)
+            $leaveRequest->commutation = isset($validated['commutation']) && $validated['commutation'] == '1';
+            $leaveRequest->status = LeaveRequest::STATUS_PENDING;
+            $leaveRequest->save();
             
-            $availableCredits = $validated['leaveType'] === 'vacation' ? $vacationBalance : $sickBalance;
+            // Notify department admins about the new leave request
+            $departmentAdmins = User::where('department_id', Auth::user()->department_id)
+                ->where('user_type', 'department_admin')
+                ->get();
+                
+            foreach ($departmentAdmins as $admin) {
+                $admin->notify(new LeaveRequestStatusUpdated($leaveRequest, 'new_request'));
+            }
+
+            // Redirect with success message - stay on the same page
+            \Log::info('Leave request created successfully', [
+                'user_id' => Auth::id(),
+                'leave_request_id' => $leaveRequest->id
+            ]);
             
-            return redirect()->back()
-                ->withErrors(['leaveType' => "Insufficient {$validated['leaveType']} leave credits. You have {$availableCredits} days available but are requesting {$numberOfDays} days."])
-                ->withInput();
-        }
-
-        // No signature processing needed
-
-        // Create the leave request
-        $leaveRequest = new LeaveRequest();
-        $leaveRequest->user_id = Auth::id();
-        $leaveRequest->leave_type = $validated['leaveType'];
-        $leaveRequest->subtype = $subtype;
-        $leaveRequest->start_date = $validated['startDate'];
-        $leaveRequest->end_date = $validated['endDate'];
-        $leaveRequest->number_of_days = $numberOfDays;
-        // Handle location data with full text
-        if ($validated['locationType'] === 'abroad' && !empty($validated['location_specify'])) {
-            // For abroad, store the specified country
-            $whereSpent = $validated['location_specify'];
-        } else if ($validated['locationType'] === 'outpatient' && !empty($validated['location_specify'])) {
-            // For outpatient, store the specified location
-            $whereSpent = $validated['location_specify'];
-        } else {
-            // For other location types, use the mapped full text
-            $locationTypeMap = [
-                'philippines' => 'Within the Philippines',
-                'abroad' => 'Abroad', // Only used if no specification provided
-                'hospital' => 'In Hospital',
-                'outpatient' => 'Outpatient' // Only used if no specification provided
-            ];
-
-            $whereSpent = $locationTypeMap[$validated['locationType']] ?? $validated['locationType'];
-        }
-        $leaveRequest->where_spent = $whereSpent;
-        // Handle commutation as boolean (1 for requested, 0 for not requested)
-        $leaveRequest->commutation = isset($validated['commutation']) && $validated['commutation'] == '1';
-        $leaveRequest->status = LeaveRequest::STATUS_PENDING;
-        $leaveRequest->save();
-        
-        // Notify department admins about the new leave request
-        $departmentAdmins = User::where('department_id', Auth::user()->department_id)
-            ->where('user_type', 'department_admin')
-            ->get();
+            return redirect()->back()->with('success', 'Your leave request has been submitted successfully and is pending approval.');
+        } catch (\Exception $e) {
+            \Log::error('Error in leave request submission', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
-        foreach ($departmentAdmins as $admin) {
-            $admin->notify(new LeaveRequestStatusUpdated($leaveRequest, 'new_request'));
+            return redirect()->back()->with('error', 'An error occurred while submitting your leave request. Please try again.');
         }
-
-        // Redirect with success message - stay on the same page
-        return redirect()->back()->with('success', 'Your leave request has been submitted successfully and is pending approval.');
     }
 
     /**
@@ -447,9 +480,17 @@ class LeaveController extends Controller
         $leaveRequest = LeaveRequest::with(['user', 'user.department', 'recommendations'])
             ->findOrFail($id);
 
+        // Check if employee had sufficient leave credits when submitting the request
+        $hasSufficientCredits = $this->hasSufficientLeaveCredits(
+            $leaveRequest->leave_type, 
+            $leaveRequest->number_of_days, 
+            $leaveRequest->user_id
+        );
+
         return view('hr_leave_approve', [
             'leaveId' => $id,
-            'leaveRequest' => $leaveRequest
+            'leaveRequest' => $leaveRequest,
+            'hasSufficientCredits' => $hasSufficientCredits
         ]);
     }
 
@@ -744,7 +785,15 @@ class LeaveController extends Controller
         $leaveRequest->save();
 
         // If the leave request is approved by the mayor, deduct leave credits and record the leave
-        if ($validated['decision'] === 'approve') {
+        // Only deduct credits if the employee had sufficient credits when submitting the request
+        // We'll check if there was a warning message about insufficient credits
+        $hasSufficientCredits = $this->hasSufficientLeaveCredits(
+            $leaveRequest->leave_type, 
+            $leaveRequest->number_of_days, 
+            $leaveRequest->user_id
+        );
+        
+        if ($validated['decision'] === 'approve' && $hasSufficientCredits) {
             $this->deductLeaveCredits($leaveRequest);
         }
 

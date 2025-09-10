@@ -9,6 +9,16 @@
                 Leave Approval Process
             </h2>
 
+            <!-- Notice for insufficient credits -->
+            @if(!$hasSufficientCredits)
+            <div class="alert alert-warning shadow-lg mb-6">
+                <div>
+                    <i class="fi-rr-info text-warning"></i>
+                    <span><strong>Notice:</strong> This leave request was submitted with insufficient leave credits. The "with pay" option has been disabled.</span>
+                </div>
+            </div>
+            @endif
+
             <!-- Step Indicator -->
             <div class="w-full py-4">
                 <ul class="steps steps-horizontal w-full">
@@ -38,6 +48,20 @@
                             <div>
                                 <h4 class="text-xl font-bold text-gray-800">{{ $leaveRequest->user->first_name }} {{ $leaveRequest->user->last_name }}</h4>
                                 <p class="text-gray-600">{{ $leaveRequest->user->department->name ?? '' }} • {{ $leaveRequest->user->position }}</p>
+                                <!-- Display leave balance -->
+                                @php
+                                    // Calculate total balances similar to employee dashboard
+                                    $allLeaveRecords = $leaveRequest->user->leaveRecords;
+                                    $vacationBalance = $allLeaveRecords->sum('vacation_balance');
+                                    $sickBalance = $allLeaveRecords->sum('sick_balance');
+                                    $requestedBalance = $leaveRequest->leave_type === 'vacation' ? $vacationBalance : $sickBalance;
+                                @endphp
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ ucfirst($leaveRequest->leave_type) }} Balance: {{ number_format($requestedBalance, 3) }} days
+                                </p>
+                                @if(!$hasSufficientCredits)
+                                <div class="badge badge-warning mt-2">Submitted with insufficient credits</div>
+                                @endif
                             </div>
                         </div>
 
@@ -159,13 +183,16 @@
                                 <div class="flex flex-col space-y-3">
                                     <label class="flex items-center space-x-2 cursor-pointer">
                                          <input type="radio" name="approved_for" value="with_pay"
-                                            class="radio radio-sm radio-success" checked>
-                                        <span>Approved for ___ days with pay</span>
+                                            class="radio radio-sm radio-success" {{ $hasSufficientCredits ? 'checked' : 'disabled' }}>
+                                        <span>Approved for {{ $leaveRequest->number_of_days }} day(s) with pay</span>
+                                        @if(!$hasSufficientCredits)
+                                        <span class="badge badge-warning ml-2">Insufficient credits</span>
+                                        @endif
                                     </label>
                                     <label class="flex items-center space-x-2 cursor-pointer">
                                          <input type="radio" name="approved_for" value="without_pay"
-                                            class="radio radio-sm radio-warning">
-                                        <span>Approved for ___ days without pay</span>
+                                            class="radio radio-sm radio-warning" {{ !$hasSufficientCredits ? 'checked' : '' }}>
+                                        <span>Approved for {{ $leaveRequest->number_of_days }} day(s) without pay</span>
                                     </label>
                                     <label class="flex items-center space-x-2 cursor-pointer">
                                          <input type="radio" name="approved_for" value="other"
