@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/leave-records', [\App\Http\Controllers\LeaveRecordController::class, 'index'])->name('leave.records');
     Route::get('/leave-record/{id}', [\App\Http\Controllers\LeaveRecordController::class, 'show'])->name('leave.record.show');
+    Route::post('/leave-records/add-undertime', [\App\Http\Controllers\LeaveRecordController::class, 'addUndertime'])->name('leave.record.add.undertime');
 
     Route::get('/hr-employees', [HRController::class, 'employees'])->name('hr.employees');
     Route::post('/hr-employees', [HRController::class, 'store'])->name('hr.employees.store');

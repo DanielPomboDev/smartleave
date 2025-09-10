@@ -183,7 +183,7 @@
                                         </div>
                                         <div>
                                             <p class="font-medium text-gray-800">Undertime</p>
-                                            <p class="text-sm text-gray-600">{{ $record->formatted_undertime }} hours</p>
+                                            <p class="text-sm text-gray-600">{{ $record->formatted_undertime }} days</p>
                                         </div>
                                     </div>
                                     <div class="text-right">
@@ -253,7 +253,7 @@
                     <label class="label">
                         <span class="label-text font-medium">Month</span>
                     </label>
-                    <select class="select select-bordered w-full" required>
+                    <select class="select select-bordered w-full" name="month" required>
                         <option value="">Select Month</option>
                         <option value="1">January</option>
                         <option value="2">February</option>
@@ -273,10 +273,11 @@
                     <label class="label">
                         <span class="label-text font-medium">Year</span>
                     </label>
-                    <select class="select select-bordered w-full" required>
+                    <select class="select select-bordered w-full" name="year" required>
                         <option value="">Select Year</option>
                         <option value="2023">2023</option>
                         <option value="2024">2024</option>
+                        <option value="2025">2025</option>
                     </select>
                 </div>
                 <div class="form-control">
@@ -297,7 +298,7 @@
                             <input type="number" name="minutes" min="0" max="59" class="input input-bordered w-full" placeholder="00" required>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mt-2">Format: (HH-MM) UT</div>
+                    <div class="text-sm text-gray-500 mt-2">Calculated Days: <span id="calculatedDays">0.000</span> days</div>
                 </div>
                 <div class="modal-action">
                     <button type="button" class="btn btn-ghost" onclick="closeAddUndertimeModal()">Cancel</button>
@@ -308,6 +309,61 @@
     </div>
 
     <script>
+        // Conversion table for hours to days
+        const hoursToDays = {
+            1: 0.125, 2: 0.250, 3: 0.375, 4: 0.500, 5: 0.625, 
+            6: 0.750, 7: 0.875, 8: 1.000
+        };
+
+        // Conversion table for minutes to days
+        const minutesToDays = {
+            1: 0.002, 2: 0.004, 3: 0.006, 4: 0.008, 5: 0.010, 6: 0.012, 7: 0.015, 8: 0.017, 9: 0.019,
+            10: 0.021, 11: 0.023, 12: 0.025, 13: 0.027, 14: 0.029, 15: 0.031, 16: 0.033, 17: 0.035, 18: 0.037, 19: 0.040,
+            20: 0.042, 21: 0.044, 22: 0.046, 23: 0.048, 24: 0.050, 25: 0.052, 26: 0.054, 27: 0.056, 28: 0.058, 29: 0.060,
+            30: 0.062, 31: 0.065, 32: 0.067, 33: 0.069, 34: 0.071, 35: 0.073, 36: 0.075, 37: 0.077, 38: 0.079, 39: 0.081,
+            40: 0.083, 41: 0.085, 42: 0.087, 43: 0.090, 44: 0.092, 45: 0.094, 46: 0.096, 47: 0.098, 48: 0.100, 49: 0.102,
+            50: 0.104, 51: 0.106, 52: 0.108, 53: 0.110, 54: 0.112, 55: 0.115, 56: 0.117, 57: 0.119, 58: 0.121, 59: 0.123, 60: 0.125
+        };
+
+        // Function to calculate days from hours and minutes
+        function calculateDaysFromTime(hours, minutes) {
+            let totalDays = 0;
+            
+            // Add hours conversion
+            if (hours > 0) {
+                totalDays += hoursToDays[hours] || 0;
+            }
+            
+            // Add minutes conversion
+            if (minutes > 0) {
+                totalDays += minutesToDays[minutes] || 0;
+            }
+            
+            return totalDays.toFixed(3);
+        }
+
+        // Function to update the calculated days display
+        function updateCalculatedDays() {
+            const hours = parseInt(document.querySelector('input[name="hours"]').value) || 0;
+            const minutes = parseInt(document.querySelector('input[name="minutes"]').value) || 0;
+            const calculatedDays = calculateDaysFromTime(hours, minutes);
+            document.getElementById('calculatedDays').textContent = calculatedDays;
+        }
+
+        // Add event listeners to hours and minutes inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoursInput = document.querySelector('input[name="hours"]');
+            const minutesInput = document.querySelector('input[name="minutes"]');
+            
+            if (hoursInput) {
+                hoursInput.addEventListener('input', updateCalculatedDays);
+            }
+            
+            if (minutesInput) {
+                minutesInput.addEventListener('input', updateCalculatedDays);
+            }
+        });
+
         function openAddUndertimeModal() {
             document.getElementById('addUndertimeModal').classList.add('modal-open');
         }
@@ -415,18 +471,139 @@
             }
         }
 
+        // Handle form submission
         document.getElementById('addUndertimeForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const hours = document.querySelector('input[name="hours"]').value.padStart(2, '0');
-            const minutes = document.querySelector('input[name="minutes"]').value.padStart(2, '0');
             
-            // Format the undertime as (HH-MM) UT
-            const undertime = `(${hours}-${minutes}) UT`;
+            console.log('Form submission started');
             
-            // Here you would typically handle the form submission with the formatted undertime
-            console.log('Undertime:', undertime);
+            // Get form values
+            const month = document.querySelector('select[name="month"]').value;
+            const year = document.querySelector('select[name="year"]').value;
+            const hours = parseInt(document.querySelector('input[name="hours"]').value) || 0;
+            const minutes = parseInt(document.querySelector('input[name="minutes"]').value) || 0;
             
-            closeAddUndertimeModal();
+            console.log('Form values:', { month, year, hours, minutes });
+            
+            // Validate required fields
+            if (!month || !year) {
+                showUndertimeErrorModal('Please select both month and year');
+                return;
+            }
+            
+            // Calculate undertime in days
+            const undertimeDays = calculateDaysFromTime(hours, minutes);
+            console.log('Calculated undertime days:', undertimeDays);
+            
+            // Prepare data for submission
+            const formData = new FormData();
+            formData.append('user_id', '{{ $employee->user_id }}');
+            formData.append('month', month);
+            formData.append('year', year);
+            formData.append('undertime_hours', undertimeDays);
+            formData.append('_token', '{{ csrf_token() }}');
+            
+            console.log('FormData prepared, sending request...');
+            
+            // Submit the data via AJAX
+            fetch('/leave-records/add-undertime', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Response received:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data received:', data);
+                if (data.success) {
+                    // Close modal and show success message
+                    closeAddUndertimeModal();
+                    showUndertimeSuccessModal('Undertime added successfully!');
+                    // Reload the page to show updated data after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showUndertimeErrorModal('Error adding undertime: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showUndertimeErrorModal('Error adding undertime. Please try again.');
+            });
         });
+
+        // Function to show success modal
+        function showUndertimeSuccessModal(message) {
+            console.log('Showing success modal with message:', message);
+            const modal = document.getElementById('undertimeSuccessModal');
+            const messageElement = document.getElementById('undertimeSuccessMessage');
+            if (modal && messageElement) {
+                messageElement.textContent = message;
+                modal.style.display = 'flex';
+                modal.classList.add('modal-open');
+                
+                // Automatically close the modal after 3 seconds
+                setTimeout(function() {
+                    modal.style.display = 'none';
+                    modal.classList.remove('modal-open');
+                }, 3000);
+            } else {
+                console.error('Success modal elements not found');
+                // Fallback to alert
+                alert(message);
+            }
+        }
+
+        // Function to show error modal
+        function showUndertimeErrorModal(message) {
+            console.log('Showing error modal with message:', message);
+            const modal = document.getElementById('undertimeErrorModal');
+            const messageElement = document.getElementById('undertimeErrorMessage');
+            if (modal && messageElement) {
+                messageElement.textContent = message;
+                modal.style.display = 'flex';
+                modal.classList.add('modal-open');
+                
+                // Automatically close the modal after 5 seconds
+                setTimeout(function() {
+                    modal.style.display = 'none';
+                    modal.classList.remove('modal-open');
+                }, 5000);
+            } else {
+                console.error('Error modal elements not found');
+                // Fallback to alert
+                alert('Error: ' + message);
+            }
+        }
     </script>
+
+    <!-- Success Modal for Undertime -->
+    <div id="undertimeSuccessModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg text-success">
+                <i class="fas fa-check-circle mr-2"></i>
+                Success!
+            </h3>
+            <p id="undertimeSuccessMessage" class="py-4">Undertime has been added successfully.</p>
+            <div class="modal-action">
+                <button onclick="document.getElementById('undertimeSuccessModal').style.display = 'none'; document.getElementById('undertimeSuccessModal').classList.remove('modal-open');" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal for Undertime -->
+    <div id="undertimeErrorModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg text-error">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                Error!
+            </h3>
+            <p id="undertimeErrorMessage" class="py-4">An error occurred while adding undertime.</p>
+            <div class="modal-action">
+                <button onclick="document.getElementById('undertimeErrorModal').style.display = 'none'; document.getElementById('undertimeErrorModal').classList.remove('modal-open');" class="btn btn-error">OK</button>
+            </div>
+        </div>
+    </div>
 </x-layouts.layout> 

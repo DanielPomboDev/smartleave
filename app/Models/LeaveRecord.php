@@ -28,7 +28,7 @@ class LeaveRecord extends Model
         'sick_earned' => 'decimal:3',
         'sick_used' => 'decimal:3',
         'sick_balance' => 'decimal:3',
-        'undertime_hours' => 'decimal:2',
+        'undertime_hours' => 'decimal:3',
         'vacation_entries' => 'array',
         'sick_entries' => 'array'
     ];
@@ -104,16 +104,11 @@ class LeaveRecord extends Model
     public function getFormattedUndertimeAttribute()
     {
         if ($this->undertime_hours <= 0) {
-            return '00-00-00';
+            return '0.000';
         }
         
-        // Convert decimal hours to hours, minutes, seconds
-        $totalSeconds = $this->undertime_hours * 3600;
-        $hours = floor($totalSeconds / 3600);
-        $minutes = floor(($totalSeconds % 3600) / 60);
-        $seconds = $totalSeconds % 60;
-        
-        return sprintf('%02d-%02d-%02d', $hours, $minutes, $seconds);
+        // Return the decimal value formatted to 3 decimal places
+        return number_format($this->undertime_hours, 3, '.', '');
     }
 
     /**

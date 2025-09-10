@@ -141,4 +141,68 @@ class LeaveRecordController extends Controller
         
         return response()->json($record);
     }
+    
+    /**
+     * Add undertime to a leave record.
+     */
+    public function addUndertime(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,user_id',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2020|max:2030',
+            'undertime_hours' => 'required|numeric|min:0|max:24',
+        ]);
+        
+        try {
+            // Round the undertime to 3 decimal places to match database precision
+            $undertimeToAdd = round($validated['undertime_hours'], 3);
+            
+            // Check if a leave record already exists for this user/month/year
+            $leaveRecord = LeaveRecord::where('user_id', $validated['user_id'])
+                ->where('month', $validated['month'])
+                ->where('year', $validated['year'])
+                ->first();
+            
+            if ($leaveRecord) {
+                // Update existing record by ADDING to the current undertime
+                $newUndertime = round($leaveRecord->undertime_hours + $undertimeToAdd, 3);
+                $leaveRecord->undertime_hours = $newUndertime;
+                // Deduct undertime from vacation leave balance
+                $leaveRecord->vacation_used = round($leaveRecord->vacation_used + $undertimeToAdd, 3);
+                $leaveRecord->vacation_balance = round($leaveRecord->vacation_earned - $leaveRecord->vacation_used, 3);
+                $leaveRecord->save();
+            } else {
+                // Create new record with default values
+                // Deduct undertime from vacation leave balance
+                $vacationUsed = round($undertimeToAdd, 3);
+                $vacationBalance = round(1.25 - $vacationUsed, 3);
+                
+                $leaveRecord = LeaveRecord::create([
+                    'user_id' => $validated['user_id'],
+                    'month' => $validated['month'],
+                    'year' => $validated['year'],
+                    'vacation_earned' => 1.25,
+                    'vacation_used' => $vacationUsed,
+                    'vacation_balance' => $vacationBalance,
+                    'sick_earned' => 1.25,
+                    'sick_used' => 0,
+                    'sick_balance' => 1.25,
+                    'undertime_hours' => $undertimeToAdd,
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Undertime added successfully',
+                'record' => $leaveRecord,
+                'added_undertime' => $undertimeToAdd
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding undertime: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
