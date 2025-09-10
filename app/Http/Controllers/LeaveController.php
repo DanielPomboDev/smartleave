@@ -954,17 +954,17 @@ class LeaveController extends Controller
     }
 
     /**
-     * Record leave in the employee's leave record, handling both paid and unpaid leaves
-     *
+     * Record an approved leave request in the appropriate month's leave record
+     * 
      * @param LeaveRequest $leaveRequest
      * @param bool $hasSufficientCredits
      * @return void
      */
     private function recordLeave(LeaveRequest $leaveRequest, bool $hasSufficientCredits)
     {
-        // Get the current month and year
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        // Get the month and year when the leave will be taken (not current date)
+        $leaveMonth = $leaveRequest->start_date->month;
+        $leaveYear = $leaveRequest->start_date->year;
 
         // Get the most recent leave record for this user to determine their current balances
         $latestLeaveRecord = \App\Models\LeaveRecord::where('user_id', $leaveRequest->user_id)
@@ -976,29 +976,31 @@ class LeaveController extends Controller
         $previousVacationBalance = $latestLeaveRecord ? $latestLeaveRecord->vacation_balance : 0;
         $previousSickBalance = $latestLeaveRecord ? $latestLeaveRecord->sick_balance : 0;
 
-        // Check if a leave record already exists for the current month
+        // Check if a leave record already exists for the leave month
         $existingLeaveRecord = \App\Models\LeaveRecord::where([
             'user_id' => $leaveRequest->user_id,
-            'month' => $currentMonth,
-            'year' => $currentYear
+            'month' => $leaveMonth,
+            'year' => $leaveYear
         ])->first();
 
         if ($existingLeaveRecord) {
             // If a record already exists, use it
             $leaveRecord = $existingLeaveRecord;
         } else {
-            // If no record exists, create a new one with earned credits
+            // Create a new leave record with initial values
+            // NOTE: Monthly credits are calculated at month end, not when individual leaves are approved
             $leaveRecord = new \App\Models\LeaveRecord([
                 'user_id' => $leaveRequest->user_id,
-                'month' => $currentMonth,
-                'year' => $currentYear,
-                'vacation_earned' => 1.25, // Standard monthly earned credits
-                'sick_earned' => 1.25,     // Standard monthly earned credits
+                'month' => $leaveMonth,
+                'year' => $leaveYear,
+                'vacation_earned' => 0, // Will be calculated at month end
+                'sick_earned' => 0, // Will be calculated at month end
                 'vacation_used' => 0,
                 'sick_used' => 0,
-                'vacation_balance' => $previousVacationBalance + 1.25,
-                'sick_balance' => $previousSickBalance + 1.25,
+                'vacation_balance' => $previousVacationBalance,
+                'sick_balance' => $previousSickBalance,
                 'undertime_hours' => 0,
+                'lwop_days' => 0,       // Days on leave without pay
                 'vacation_entries' => [],
                 'sick_entries' => []
             ]);
@@ -1023,15 +1025,22 @@ class LeaveController extends Controller
         $previousVacationUsed = $leaveRecord->vacation_used;
         $previousSickUsed = $leaveRecord->sick_used;
 
-        // Record the leave (deduct credits only if employee had sufficient credits)
+        // Record the leave (deduct credits only if employee had sufficient credits AND it's for the current or past month)
+        $isCurrentOrPastMonth = ($leaveYear < now()->year) || 
+                               ($leaveYear == now()->year && $leaveMonth <= now()->month);
+        
         if ($leaveRequest->leave_type === 'vacation') {
-            if ($hasSufficientCredits) {
+            // For future months, just record the entry without deducting leave
+            // For current/past months, deduct immediately as before
+            if ($hasSufficientCredits && $isCurrentOrPastMonth) {
                 $leaveRecord->vacation_used += $leaveRequest->number_of_days;
                 $leaveRecord->vacation_balance -= $leaveRequest->number_of_days;
             }
             $vacationEntries[] = $leaveEntry;
         } elseif ($leaveRequest->leave_type === 'sick') {
-            if ($hasSufficientCredits) {
+            // For future months, just record the entry without deducting leave
+            // For current/past months, deduct immediately as before
+            if ($hasSufficientCredits && $isCurrentOrPastMonth) {
                 $leaveRecord->sick_used += $leaveRequest->number_of_days;
                 $leaveRecord->sick_balance -= $leaveRequest->number_of_days;
             }

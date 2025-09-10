@@ -17,6 +17,7 @@ class LeaveRecord extends Model
         'sick_used',
         'sick_balance',
         'undertime_hours',
+        'lwop_days',
         'vacation_entries',
         'sick_entries'
     ];
@@ -29,6 +30,7 @@ class LeaveRecord extends Model
         'sick_used' => 'decimal:3',
         'sick_balance' => 'decimal:3',
         'undertime_hours' => 'decimal:3',
+        'lwop_days' => 'decimal:3',
         'vacation_entries' => 'array',
         'sick_entries' => 'array'
     ];

@@ -50,10 +50,10 @@
                                 <p class="text-gray-600">{{ $leaveRequest->user->department->name ?? '' }} • {{ $leaveRequest->user->position }}</p>
                                 <!-- Display leave balance -->
                                 @php
-                                    // Calculate total balances similar to employee dashboard
+                                    // Calculate current balances (use the most recent record's balance)
                                     $allLeaveRecords = $leaveRequest->user->leaveRecords;
-                                    $vacationBalance = $allLeaveRecords->sum('vacation_balance');
-                                    $sickBalance = $allLeaveRecords->sum('sick_balance');
+                                    $vacationBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->vacation_balance : 0;
+                                    $sickBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->sick_balance : 0;
                                     $requestedBalance = $leaveRequest->leave_type === 'vacation' ? $vacationBalance : $sickBalance;
                                 @endphp
                                 <p class="text-sm text-gray-500 mt-1">

@@ -35,9 +35,9 @@ Route::middleware(['auth'])->group(function () {
         // Get all leave records for this user
         $allLeaveRecords = $user->leaveRecords;
             
-        // Calculate total balances
-        $vacationBalance = $allLeaveRecords->sum('vacation_balance');
-        $sickBalance = $allLeaveRecords->sum('sick_balance');
+        // Calculate current balances (use the most recent record's balance)
+        $vacationBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->vacation_balance : 0;
+        $sickBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->sick_balance : 0;
         
         // Get recent leave requests for this user
         $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->user_id)
@@ -101,9 +101,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::clas
         // Get all leave records for this user
         $allLeaveRecords = $user->leaveRecords;
             
-        // Calculate total balances
-        $vacationBalance = $allLeaveRecords->sum('vacation_balance');
-        $sickBalance = $allLeaveRecords->sum('sick_balance');
+        // Calculate current balances (use the most recent record's balance)
+        $vacationBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->vacation_balance : 0;
+        $sickBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->sick_balance : 0;
         
         // Get recent leave requests for this user
         $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->user_id)
@@ -121,9 +121,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckStandardEmployeeLogin::clas
         // Get all leave records for this user
         $allLeaveRecords = $user->leaveRecords;
             
-        // Calculate total balances
-        $vacationBalance = $allLeaveRecords->sum('vacation_balance');
-        $sickBalance = $allLeaveRecords->sum('sick_balance');
+        // Calculate current balances (use the most recent record's balance)
+        $vacationBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->vacation_balance : 0;
+        $sickBalance = $allLeaveRecords->isNotEmpty() ? $allLeaveRecords->first()->sick_balance : 0;
         
         return view('employee_request_leave', compact('vacationBalance', 'sickBalance'));
     })->name('employee.request.leave');
