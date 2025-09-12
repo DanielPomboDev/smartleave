@@ -55,12 +55,12 @@
                         <span class="text-xs">Sick leave can be applied after the leave period</span>
                     </div>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="sickSubtype" value="hospital" class="radio radio-xs radio-primary">
-                        <span class="text-sm">In Hospital</span>
+                        <input type="radio" name="sickSubtype" value="maternity" class="radio radio-xs radio-primary">
+                        <span class="text-sm">Maternity</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="sickSubtype" value="outpatient" class="radio radio-xs radio-primary" onchange="toggleQuickOtherSpecify('sick')">
-                        <span class="text-sm">Outpatient (specify)</span>
+                        <input type="radio" name="sickSubtype" value="other" class="radio radio-xs radio-primary" onchange="toggleQuickOtherSpecify('sick')">
+                        <span class="text-sm">Other (specify)</span>
                     </label>
                     <div id="quickSickOtherContainer" class="hidden">
                         <input type="text" name="sickOtherSpecify" class="input input-bordered input-sm w-full" placeholder="Please specify">
@@ -138,16 +138,34 @@
                     <span class="label-text font-medium">Where will leave be spent?</span>
                 </label>
                 <div class="flex flex-col space-y-2">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="locationType" value="philippines" class="radio radio-sm radio-primary">
-                        <span>Within the Philippines</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="locationType" value="abroad" class="radio radio-sm radio-primary" onchange="toggleLocationSpecify()">
-                        <span>Abroad (specify)</span>
-                    </label>
-                    <div id="locationSpecifyContainer" class="hidden pl-6">
-                        <input type="text" name="location_specify" class="input input-bordered input-sm w-full" placeholder="Country">
+                    <!-- Options for Vacation Leave -->
+                    <div id="quickVacationLocation" class="hidden">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="locationType" value="philippines" class="radio radio-sm radio-primary">
+                            <span>Within the Philippines</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="locationType" value="abroad" class="radio radio-sm radio-primary" onchange="toggleLocationSpecify()">
+                            <span>Abroad (specify)</span>
+                        </label>
+                        <div id="quickVacationLocationSpecifyContainer" class="hidden pl-6">
+                            <input type="text" name="location_specify" class="input input-bordered input-sm w-full" placeholder="Country">
+                        </div>
+                    </div>
+                    
+                    <!-- Options for Sick Leave -->
+                    <div id="quickSickLocation" class="hidden">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="locationType" value="hospital" class="radio radio-sm radio-primary" checked>
+                            <span>In Hospital</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="locationType" value="outpatient" class="radio radio-sm radio-primary" onchange="toggleLocationSpecify()">
+                            <span>Outpatient (specify)</span>
+                        </label>
+                        <div id="quickSickLocationSpecifyContainer" class="hidden pl-6">
+                            <input type="text" name="location_specify" class="input input-bordered input-sm w-full" placeholder="Location">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -246,8 +264,8 @@
                     }
                     
                     if (vacationSubtype === 'other') {
-                        const otherSpecify = document.querySelector('input[name="vacationOtherSpecify"]').value;
-                        if (!otherSpecify.trim()) {
+                        const otherInput = document.querySelector('input[name="vacationOtherSpecify"]');
+                        if (!otherInput || !otherInput.value.trim()) {
                             showErrorMessage(1, 'Please specify the other purpose');
                             return;
                         }
@@ -259,10 +277,10 @@
                         return;
                     }
                     
-                    if (sickSubtype === 'outpatient') {
-                        const otherSpecify = document.querySelector('input[name="sickOtherSpecify"]').value;
-                        if (!otherSpecify.trim()) {
-                            showErrorMessage(1, 'Please specify the outpatient details');
+                    if (sickSubtype === 'other') {
+                        const otherInput = document.querySelector('input[name="sickOtherSpecify"]');
+                        if (!otherInput || !otherInput.value.trim()) {
+                            showErrorMessage(1, 'Please specify the other details');
                             return;
                         }
                     }
@@ -271,6 +289,30 @@
                 // Use the comprehensive date validation function
                 if (!validateDates()) {
                     return; // validateDates() will show the appropriate error message
+                }
+            } else if (currentStep === 3) {
+                // Validate location options
+                const locationType = document.querySelector('input[name="locationType"]:checked')?.value;
+                if (!locationType) {
+                    showErrorMessage(3, 'Please select where the leave will be spent');
+                    return;
+                }
+                
+                // Get the leave type to determine which location specification field to check
+                const leaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+                
+                if (locationType === 'abroad') {
+                    const locationSpecify = document.querySelector('#quickVacationLocationSpecifyContainer input[name="location_specify"]').value;
+                    if (!locationSpecify.trim()) {
+                        showErrorMessage(3, 'Please specify the country');
+                        return;
+                    }
+                } else if (locationType === 'outpatient') {
+                    const locationSpecify = document.querySelector('#quickSickLocationSpecifyContainer input[name="location_specify"]').value;
+                    if (!locationSpecify.trim()) {
+                        showErrorMessage(3, 'Please specify the location');
+                        return;
+                    }
                 }
             }
             
@@ -297,11 +339,17 @@
             document.getElementById('quickVacationSubtypes').classList.add('hidden');
             document.getElementById('quickSickSubtypes').classList.add('hidden');
             
-            // Show the selected subtype
+            // Hide all location options first
+            document.getElementById('quickVacationLocation').classList.add('hidden');
+            document.getElementById('quickSickLocation').classList.add('hidden');
+            
+            // Show the selected subtype and location options
             if (type === 'vacation') {
                 document.getElementById('quickVacationSubtypes').classList.remove('hidden');
+                document.getElementById('quickVacationLocation').classList.remove('hidden');
             } else if (type === 'sick') {
                 document.getElementById('quickSickSubtypes').classList.remove('hidden');
+                document.getElementById('quickSickLocation').classList.remove('hidden');
             }
             
             // Update date restrictions based on leave type
@@ -354,14 +402,23 @@
                 const isOther = document.querySelector('input[name="vacationSubtype"]:checked')?.value === 'other';
                 document.getElementById('quickVacationOtherContainer').classList.toggle('hidden', !isOther);
             } else if (type === 'sick') {
-                const isOutpatient = document.querySelector('input[name="sickSubtype"]:checked')?.value === 'outpatient';
-                document.getElementById('quickSickOtherContainer').classList.toggle('hidden', !isOutpatient);
+                const isOther = document.querySelector('input[name="sickSubtype"]:checked')?.value === 'other';
+                document.getElementById('quickSickOtherContainer').classList.toggle('hidden', !isOther);
             }
         }
         
         function toggleLocationSpecify() {
-            const isAbroad = document.querySelector('input[name="locationType"]:checked')?.value === 'abroad';
-            document.getElementById('locationSpecifyContainer').classList.toggle('hidden', !isAbroad);
+            // Hide both containers first
+            document.getElementById('quickVacationLocationSpecifyContainer').classList.add('hidden');
+            document.getElementById('quickSickLocationSpecifyContainer').classList.add('hidden');
+            
+            // Check which location type is selected and show the appropriate container
+            const locationType = document.querySelector('input[name="locationType"]:checked')?.value;
+            if (locationType === 'abroad') {
+                document.getElementById('quickVacationLocationSpecifyContainer').classList.remove('hidden');
+            } else if (locationType === 'outpatient') {
+                document.getElementById('quickSickLocationSpecifyContainer').classList.remove('hidden');
+            }
         }
         
         // Function to validate dates based on leave type
@@ -530,10 +587,19 @@
                 return;
             }
             
+            // Get the leave type to determine which location specification field to check
+            const leaveType = document.querySelector('input[name="leaveType"]:checked')?.value;
+            
             if (locationType === 'abroad') {
-                const locationSpecify = document.querySelector('input[name="location_specify"]').value;
+                const locationSpecify = document.querySelector('#quickVacationLocationSpecifyContainer input[name="location_specify"]').value;
                 if (!locationSpecify.trim()) {
                     showErrorMessage(3, 'Please specify the country');
+                    return;
+                }
+            } else if (locationType === 'outpatient') {
+                const locationSpecify = document.querySelector('#quickSickLocationSpecifyContainer input[name="location_specify"]').value;
+                if (!locationSpecify.trim()) {
+                    showErrorMessage(3, 'Please specify the location');
                     return;
                 }
             }
@@ -597,10 +663,13 @@
             // Calculate initial number of days
             calculateDays();
             
-            // Set default location type
-            const philippinesRadio = document.querySelector('input[name="locationType"][value="philippines"]');
-            if (philippinesRadio) {
-                philippinesRadio.checked = true;
+            // Set initial location options based on default leave type (if any is selected)
+            if (selectedLeaveType) {
+                showQuickLeaveSubtype(selectedLeaveType);
+                updateDateRestrictions(selectedLeaveType);
+            } else {
+                // Show default location options (vacation) if no leave type is selected
+                document.getElementById('quickVacationLocation').classList.remove('hidden');
             }
             
             // Add event listener to update end date min when start date changes
@@ -620,6 +689,7 @@
             const leaveTypeInputs = document.querySelectorAll('input[name="leaveType"]');
             leaveTypeInputs.forEach(input => {
                 input.addEventListener('change', function() {
+                    showQuickLeaveSubtype(this.value);
                     updateDateRestrictions(this.value);
                 });
             });

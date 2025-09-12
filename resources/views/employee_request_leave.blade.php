@@ -47,7 +47,7 @@
                         <!-- Vacation Leave -->
                         <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors bg-gray-50">
                             <div class="flex items-center cursor-pointer" onclick="selectLeaveType('vacation')">
-                                <input type="radio" name="leaveType" id="vacationLeave" value="vacation" class="radio radio-primary" onchange="showSubtype('vacation')">
+                                <input type="radio" name="leaveType" id="vacationLeave" value="vacation" class="radio radio-primary" onchange="selectLeaveType('vacation')">
                                 <label for="vacationLeave" class="ml-2 font-medium text-gray-800">Vacation Leave</label>
                             </div>
                             
@@ -73,7 +73,7 @@
                         <!-- Sick Leave -->
                         <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors bg-gray-50">
                             <div class="flex items-center cursor-pointer" onclick="selectLeaveType('sick')">
-                                <input type="radio" name="leaveType" id="sickLeave" value="sick" class="radio radio-primary" onchange="showSubtype('sick')">
+                                <input type="radio" name="leaveType" id="sickLeave" value="sick" class="radio radio-primary" onchange="selectLeaveType('sick')">
                                 <label for="sickLeave" class="ml-2 font-medium text-gray-800">Sick Leave</label>
                             </div>
                             
@@ -893,6 +893,7 @@
             // Select the radio button when clicking anywhere in the container
             document.getElementById(type + 'Leave').checked = true;
             showSubtype(type);
+            updateDateRestrictions(type);
         }
         
         function showSubtype(type) {

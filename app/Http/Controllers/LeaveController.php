@@ -102,7 +102,7 @@ class LeaveController extends Controller
                 'numberOfDays' => 'required|integer|min:1',
                 'locationType' => 'required|string',
                 'location_specify' => 'nullable|string|max:255',
-                'commutation' => 'nullable|boolean',
+                'commutation' => 'nullable|string',
             ]);
 
             // Additional validation for vacation leave timing
@@ -147,6 +147,7 @@ class LeaveController extends Controller
                     $sickSubtypeMap = [
                         'hospital' => 'In Hospital',
                         'outpatient' => 'Outpatient',
+                        'maternity' => 'Maternity',
                         // Add other mappings as needed
                     ];
                     $subtype = $sickSubtypeMap[$request->input('sickSubtype')] ?? $request->input('sickSubtype');
@@ -211,7 +212,7 @@ class LeaveController extends Controller
                 $whereSpent = $validated['location_specify'];
             } else if ($validated['locationType'] === 'outpatient' && !empty($validated['location_specify'])) {
                 // For outpatient, store the specified location
-                $whereSpent = $validated['location_specify'];
+                $whereSpent = 'Outpatient: ' . $validated['location_specify'];
             } else {
                 // For other location types, use the mapped full text
                 $locationTypeMap = [
