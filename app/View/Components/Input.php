@@ -3,17 +3,18 @@
 namespace App\View\Components;
 
 use Illuminate\View\Component;
+use Illuminate\Contracts\View\View;
 
 class Input extends Component
 {
-    public $label;
-    public $type;
-    public $id;
-    public $name;
-    public $placeholder;
-    public $class;
+    public string $label;
+    public string $type;
+    public ?string $id;
+    public ?string $name;
+    public string $placeholder;
+    public string $class;
 
-    public function __construct($label, $type = 'text', $id = null, $name = null, $placeholder = '', $class = '')
+    public function __construct(string $label, string $type = 'text', ?string $id = null, ?string $name = null, string $placeholder = '', string $class = '')
     {
         $this->label = $label;
         $this->type = $type;
@@ -23,9 +24,8 @@ class Input extends Component
         $this->class = $class;
     }
 
-    public function render()
+    public function render(): View
     {
         return view('components.input');
     }
 }
-
